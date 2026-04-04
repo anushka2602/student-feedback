@@ -19,85 +19,134 @@ export default function FeedbackPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen" style={{ background: '#FFF6F6' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
 
-      {/* Dark teal header */}
-      <div style={{ background: '#2C687B' }} className="px-6 pt-10 pb-16">
-        <div className="max-w-md mx-auto">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: '#8CC7C4' }}>Student Portal</p>
-              <h2 className="font-display text-2xl font-bold text-white">{userName}</h2>
+      {/* Top nav */}
+      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
             </div>
-            <div className="flex gap-2">
-              <Link href="/change-password" className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ color: '#8CC7C4', border: '1.5px solid rgba(140,199,196,0.4)' }}>
-                Password
-              </Link>
-              <button
-                onClick={() => { clearUser(); router.push('/') }}
-                className="text-xs font-semibold px-3 py-2 rounded-lg"
-                style={{ color: 'rgba(255,255,255,0.8)', border: '1.5px solid rgba(255,255,255,0.3)' }}
-              >
-                Logout
-              </button>
-            </div>
+            <span style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a2e' }}>Feedback Portal</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '13px', color: '#888', marginRight: '8px' }}>Hi, {userName.split(' ')[0]}</span>
+            <Link href="/change-password" style={{ fontSize: '12px', color: '#2C687B', textDecoration: 'none', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', border: '1px solid #e0f0f2', background: '#f0f9fa' }}>
+              Password
+            </Link>
+            <button onClick={() => { clearUser(); router.push('/') }} style={{ fontSize: '12px', color: '#888', background: 'none', border: '1px solid #eee', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              Logout
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Floating cards */}
-      <div className="px-6 -mt-8 pb-10">
-        <div className="max-w-md mx-auto">
+      {/* Content */}
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 24px' }}>
 
-          <div className="card p-6 mb-5">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: '#8CC7C4' }}>Choose Category</p>
-            <h3 className="font-display text-xl font-bold mb-2" style={{ color: '#2C687B' }}>What would you like to rate?</h3>
-            <p className="text-sm" style={{ color: '#8CC7C4' }}>All feedback is anonymous and helps improve your institution.</p>
-          </div>
+        {/* Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#1a1a2e', marginBottom: '6px' }}>
+            Submit Feedback
+          </h1>
+          <p style={{ color: '#888', fontSize: '14px' }}>
+            All feedback is anonymous. Select a category to get started.
+          </p>
+        </div>
 
-          <div className="flex flex-col gap-4">
+        {/* Category cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-            {/* Academic */}
-            <button
-              onClick={() => router.push('/feedback/academic')}
-              className="group card p-5 text-left flex items-center gap-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-              style={{ borderLeft: '4px solid #DB1A1A' }}
-            >
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF6F6' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="font-display font-bold text-lg" style={{ color: '#2C687B' }}>Academic</p>
-                <p className="text-sm" style={{ color: '#8CC7C4' }}>Teachers & timetable management</p>
-              </div>
-              <svg className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+          {/* Academic */}
+          <button
+            onClick={() => router.push('/feedback/academic')}
+            style={{
+              background: 'white', border: '1px solid #eaeaea', borderRadius: '16px',
+              padding: '24px', textAlign: 'left', cursor: 'pointer', width: '100%',
+              display: 'flex', alignItems: 'center', gap: '20px',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#DB1A1A'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 20px rgba(219,26,26,0.08)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#eaeaea'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
               </svg>
-            </button>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>Academic</div>
+              <div style={{ fontSize: '13px', color: '#888' }}>Rate teachers across 8 factors + timetable management</div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                {['Clarity', 'Knowledge', 'Punctuality', 'Communication'].map(tag => (
+                  <span key={tag} style={{ fontSize: '11px', color: '#DB1A1A', background: '#fff5f5', padding: '3px 8px', borderRadius: '100px', fontWeight: 500 }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
 
-            {/* Non-Academic */}
-            <button
-              onClick={() => router.push('/feedback/non-academic')}
-              className="group card p-5 text-left flex items-center gap-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-              style={{ borderLeft: '4px solid #2C687B' }}
-            >
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#edf7f7' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="font-display font-bold text-lg" style={{ color: '#2C687B' }}>Non-Academic</p>
-                <p className="text-sm" style={{ color: '#8CC7C4' }}>Facilities, cleanliness & campus life</p>
-              </div>
-              <svg className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+          {/* Non-Academic */}
+          <button
+            onClick={() => router.push('/feedback/non-academic')}
+            style={{
+              background: 'white', border: '1px solid #eaeaea', borderRadius: '16px',
+              padding: '24px', textAlign: 'left', cursor: 'pointer', width: '100%',
+              display: 'flex', alignItems: 'center', gap: '20px',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#2C687B'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 20px rgba(44,104,123,0.08)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#eaeaea'
+              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: '#f0f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-            </button>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>Non-Academic</div>
+              <div style={{ fontSize: '13px', color: '#888' }}>Rate campus facilities, cleanliness, safety & more</div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                {['Infrastructure', 'Wi-Fi', 'Safety', 'Hygiene'].map(tag => (
+                  <span key={tag} style={{ fontSize: '11px', color: '#2C687B', background: '#f0f9fa', padding: '3px 8px', borderRadius: '100px', fontWeight: 500 }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
 
-          </div>
+        {/* Note */}
+        <div style={{ marginTop: '24px', background: 'white', border: '1px solid #eaeaea', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8CC7C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p style={{ fontSize: '13px', color: '#888', lineHeight: 1.6 }}>
+            Rating is completely <strong style={{ color: '#1a1a2e' }}>optional</strong> — rate only what you want. You can rate one teacher or all of them. Submit when you&apos;re ready.
+          </p>
         </div>
       </div>
     </div>

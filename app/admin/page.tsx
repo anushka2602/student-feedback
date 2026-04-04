@@ -8,7 +8,8 @@ import Link from 'next/link'
 type AcademicRow = { id: string; student_name: string; teacher_name: string; factor: string; rating: number; comment: string; submitted_at: string }
 type NonAcademicRow = { id: string; student_name: string; category: string; rating: number; comment: string; submitted_at: string }
 
-const getRatingColor = (r: number) => r >= 8 ? '#2C687B' : r >= 5 ? '#f4a261' : '#DB1A1A'
+const getRatingColor = (r: number) => r >= 8 ? '#2C687B' : r >= 5 ? '#f97316' : '#DB1A1A'
+const getRatingBg = (r: number) => r >= 8 ? '#f0f9fa' : r >= 5 ? '#fff7ed' : '#fff5f5'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -45,146 +46,158 @@ export default function AdminDashboard() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FFF6F6' }}>
-        <p style={{ color: '#2C687B' }}>Loading all feedback data...</p>
+      <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#888', fontSize: '14px' }}>Loading all feedback data...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#FFF6F6' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
 
-      {/* Red header */}
-      <div style={{ background: '#DB1A1A' }} className="px-6 pt-10 pb-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Admin Panel</p>
-              <h2 className="font-display text-2xl font-bold text-white">All Feedback</h2>
+      {/* Nav */}
+      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
             </div>
-            <div className="flex gap-2 items-start">
-              <Link href="/change-password" className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ color: 'rgba(255,255,255,0.8)', border: '1.5px solid rgba(255,255,255,0.3)' }}>
-                Password
-              </Link>
-              <button onClick={() => { clearUser(); router.push('/') }} className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ color: 'rgba(255,255,255,0.8)', border: '1.5px solid rgba(255,255,255,0.3)' }}>
-                Logout
-              </button>
-            </div>
+            <span style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a2e' }}>Admin Panel</span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link href="/change-password" style={{ fontSize: '12px', color: '#2C687B', textDecoration: 'none', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', border: '1px solid #e0f0f2', background: '#f0f9fa' }}>
+              Password
+            </Link>
+            <button onClick={() => { clearUser(); router.push('/') }} style={{ fontSize: '12px', color: '#888', background: 'none', border: '1px solid #eee', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              Logout
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="px-6 -mt-12 pb-10">
-        <div className="max-w-4xl mx-auto">
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 24px' }}>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="card p-4 text-center">
-              <p className="font-display font-bold text-3xl" style={{ color: '#DB1A1A' }}>{academic.length}</p>
-              <p className="text-xs font-semibold mt-1" style={{ color: '#8CC7C4' }}>Academic Responses</p>
-            </div>
-            <div className="card p-4 text-center">
-              <p className="font-display font-bold text-3xl" style={{ color: '#2C687B' }}>{nonAcademic.length}</p>
-              <p className="text-xs font-semibold mt-1" style={{ color: '#8CC7C4' }}>Non-Academic Responses</p>
-            </div>
-          </div>
+        {/* Header */}
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>All Feedback</h1>
+          <p style={{ color: '#888', fontSize: '14px' }}>Complete overview of all student submissions</p>
+        </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2 mb-5">
-            {(['academic', 'non-academic'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all"
-                style={{
-                  background: tab === t ? '#2C687B' : 'white',
-                  color: tab === t ? 'white' : '#8CC7C4',
-                  border: `2px solid ${tab === t ? '#2C687B' : '#f0f0f0'}`,
-                }}
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+          {[
+            { label: 'Academic Responses', value: academic.length, color: '#DB1A1A' },
+            { label: 'Non-Academic Responses', value: nonAcademic.length, color: '#2C687B' },
+            { label: 'Total Submissions', value: academic.length + nonAcademic.length, color: '#555' },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '14px', padding: '20px' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
+              <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          {(['academic', 'non-academic'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                padding: '9px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'Inter, sans-serif', border: 'none',
+                background: tab === t ? '#1a1a2e' : 'white',
+                color: tab === t ? 'white' : '#888',
+                boxShadow: tab === t ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              {t === 'academic' ? `Academic (${academic.length})` : `Non-Academic (${nonAcademic.length})`}
+            </button>
+          ))}
+        </div>
+
+        {/* Academic */}
+        {tab === 'academic' && (
+          <>
+            <div style={{ marginBottom: '16px' }}>
+              <select
+                value={filterTeacher}
+                onChange={e => setFilterTeacher(e.target.value)}
+                style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid #eaeaea', fontSize: '13px', color: '#1a1a2e', fontFamily: 'Inter, sans-serif', background: 'white', outline: 'none', cursor: 'pointer' }}
               >
-                {t === 'academic' ? `Academic (${academic.length})` : `Non-Academic (${nonAcademic.length})`}
-              </button>
-            ))}
-          </div>
+                <option value="">All Teachers</option>
+                {uniqueTeachers.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
 
-          {/* Academic tab */}
-          {tab === 'academic' && (
-            <>
-              <div className="mb-4">
-                <select
-                  value={filterTeacher}
-                  onChange={e => setFilterTeacher(e.target.value)}
-                  className="rounded-xl px-4 py-2.5 text-sm outline-none"
-                  style={{ border: '2px solid #f0f0f0', color: '#2C687B', fontFamily: 'DM Sans, sans-serif', background: 'white' }}
-                >
-                  <option value="">All Teachers</option>
-                  {uniqueTeachers.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {filteredAcademic.length === 0 ? (
-                  <div className="card p-10 text-center"><p className="text-sm" style={{ color: '#8CC7C4' }}>No academic feedback yet.</p></div>
-                ) : filteredAcademic.map(row => (
-                  <div key={row.id} className="card p-4">
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="font-semibold text-sm" style={{ color: '#2C687B' }}>{row.teacher_name}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#f0f0f0', color: '#8CC7C4' }}>{row.factor}</span>
-                        </div>
-                        <p className="text-xs flex items-center gap-1.5" style={{ color: '#8CC7C4' }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                          {row.student_name} · {formatDate(row.submitted_at)}
-                        </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {filteredAcademic.length === 0 ? (
+                <div style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '14px', padding: '40px', textAlign: 'center' }}>
+                  <p style={{ color: '#aaa', fontSize: '14px' }}>No academic feedback yet.</p>
+                </div>
+              ) : filteredAcademic.map(row => (
+                <div key={row.id} style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '12px', padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{row.teacher_name}</span>
+                        <span style={{ fontSize: '11px', color: '#888', background: '#f5f5f5', padding: '2px 8px', borderRadius: '100px' }}>{row.factor}</span>
                       </div>
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center" style={{ background: `${getRatingColor(row.rating)}12` }}>
-                        <span className="font-display font-bold text-lg leading-none" style={{ color: getRatingColor(row.rating) }}>{row.rating}</span>
-                        <span className="text-xs" style={{ color: getRatingColor(row.rating) }}>/10</span>
-                      </div>
-                    </div>
-                    {row.comment && (
-                      <div className="mt-3 rounded-xl px-4 py-2.5 text-sm" style={{ background: '#fafafa', borderLeft: '3px solid #8CC7C4', color: '#2C687B' }}>
-                        {row.comment}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Non-academic tab */}
-          {tab === 'non-academic' && (
-            <div className="flex flex-col gap-3">
-              {nonAcademic.length === 0 ? (
-                <div className="card p-10 text-center"><p className="text-sm" style={{ color: '#8CC7C4' }}>No non-academic feedback yet.</p></div>
-              ) : nonAcademic.map(row => (
-                <div key={row.id} className="card p-4">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm mb-1" style={{ color: '#2C687B' }}>{row.category}</p>
-                      <p className="text-xs flex items-center gap-1.5" style={{ color: '#8CC7C4' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#aaa' }}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         {row.student_name} · {formatDate(row.submitted_at)}
-                      </p>
+                      </div>
                     </div>
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center" style={{ background: `${getRatingColor(row.rating)}12` }}>
-                      <span className="font-display font-bold text-lg leading-none" style={{ color: getRatingColor(row.rating) }}>{row.rating}</span>
-                      <span className="text-xs" style={{ color: getRatingColor(row.rating) }}>/10</span>
+                    <div style={{ flexShrink: 0, width: '48px', height: '48px', borderRadius: '12px', background: getRatingBg(row.rating), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1, color: getRatingColor(row.rating) }}>{row.rating}</span>
+                      <span style={{ fontSize: '10px', color: getRatingColor(row.rating) }}>/10</span>
                     </div>
                   </div>
                   {row.comment && (
-                    <div className="mt-3 rounded-xl px-4 py-2.5 text-sm" style={{ background: '#fafafa', borderLeft: '3px solid #8CC7C4', color: '#2C687B' }}>
+                    <div style={{ marginTop: '12px', background: '#f8f8f8', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#555', borderLeft: '3px solid #8CC7C4' }}>
                       {row.comment}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          )}
+          </>
+        )}
 
-        </div>
+        {/* Non-Academic */}
+        {tab === 'non-academic' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {nonAcademic.length === 0 ? (
+              <div style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '14px', padding: '40px', textAlign: 'center' }}>
+                <p style={{ color: '#aaa', fontSize: '14px' }}>No non-academic feedback yet.</p>
+              </div>
+            ) : nonAcademic.map(row => (
+              <div key={row.id} style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '12px', padding: '16px 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '4px' }}>{row.category}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#aaa' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      {row.student_name} · {formatDate(row.submitted_at)}
+                    </div>
+                  </div>
+                  <div style={{ flexShrink: 0, width: '48px', height: '48px', borderRadius: '12px', background: getRatingBg(row.rating), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1, color: getRatingColor(row.rating) }}>{row.rating}</span>
+                    <span style={{ fontSize: '10px', color: getRatingColor(row.rating) }}>/10</span>
+                  </div>
+                </div>
+                {row.comment && (
+                  <div style={{ marginTop: '12px', background: '#f8f8f8', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#555', borderLeft: '3px solid #8CC7C4' }}>
+                    {row.comment}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

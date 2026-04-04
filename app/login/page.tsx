@@ -6,9 +6,9 @@ import { setUser } from '@/lib/auth'
 import Link from 'next/link'
 
 const roleConfig = {
-  student: { color: '#DB1A1A', label: 'Student' },
-  teacher: { color: '#2C687B', label: 'Teacher' },
-  admin: { color: '#8CC7C4', label: 'Admin' },
+  student: { color: '#DB1A1A', label: 'Student', bg: '#2C687B' },
+  teacher: { color: '#2C687B', label: 'Teacher', bg: '#1a4a5a' },
+  admin: { color: '#333', label: 'Admin', bg: '#222' },
 }
 
 function LoginForm() {
@@ -29,15 +29,14 @@ function LoginForm() {
     setError('')
 
     const { data, error: dbError } = await supabase
-      .from('users')
-      .select('*')
+      .from('users').select('*')
       .eq('display_id', displayId.trim())
       .eq('password', password)
       .eq('role', role)
       .single()
 
     if (dbError || !data) {
-      setError('Incorrect ID or password. Please check and try again.')
+      setError('Incorrect ID or password. Please try again.')
       setLoading(false)
       return
     }
@@ -49,121 +48,159 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#FFF6F6' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'white' }}>
 
-      {/* Left decorative panel */}
-      <div className="hidden md:flex flex-col justify-between p-10 w-2/5" style={{ background: config.color }}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.2)' }}>
+      {/* Left photo panel */}
+      <div style={{
+        width: '42%',
+        background: config.bg,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '40px',
+        position: 'relative',
+        overflow: 'hidden',
+      }} className="hidden md:flex md:flex-col">
+        {/* Dot pattern */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.06,
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '28px 28px',
+        }} />
+
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <span className="text-white text-xs font-semibold tracking-widest uppercase opacity-80">Feedback Portal</span>
+          <span style={{ color: 'white', fontWeight: 600, fontSize: '14px' }}>Feedback Portal</span>
         </div>
 
-        <div>
-          <p className="font-display text-5xl font-bold text-white leading-none mb-4">
-            {config.label}<br />Login
+        {/* Quote */}
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontSize: '48px', color: 'rgba(255,255,255,0.15)', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: '16px' }}>&ldquo;</div>
+          <p style={{ color: 'white', fontSize: '20px', fontWeight: 600, lineHeight: 1.5, marginBottom: '20px', fontFamily: 'Playfair Display, serif' }}>
+            {role === 'student' && 'Your honest feedback makes our institution better for everyone.'}
+            {role === 'teacher' && 'Growth starts with understanding how your students experience your teaching.'}
+            {role === 'admin' && 'Data-driven decisions begin with honest student feedback.'}
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {role === 'student' && 'Rate your teachers and share your experience to help improve the institution.'}
-            {role === 'teacher' && 'View your anonymous student ratings and feedback to grow professionally.'}
-            {role === 'admin' && 'Access the full dashboard with all student feedback and analytics.'}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'white', fontSize: '14px', fontWeight: 700 }}>
+                {role === 'student' ? 'S' : role === 'teacher' ? 'T' : 'A'}
+              </span>
+            </div>
+            <div>
+              <div style={{ color: 'white', fontSize: '13px', fontWeight: 600 }}>{config.label} Login</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Secure & Anonymous</div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-2">
+        {/* Bottom bar */}
+        <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
           {['student', 'teacher', 'admin'].map(r => (
-            <div key={r} className="h-1.5 rounded-full flex-1" style={{ background: r === role ? 'white' : 'rgba(255,255,255,0.3)' }} />
+            <div key={r} style={{
+              height: '3px', flex: 1, borderRadius: '2px',
+              background: r === role ? 'white' : 'rgba(255,255,255,0.2)',
+            }} />
           ))}
         </div>
       </div>
 
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full" style={{ maxWidth: '400px' }}>
+      {/* Right form */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: '#fafafa' }}>
+        <div style={{ width: '100%', maxWidth: '380px' }}>
 
-          <Link href="/" className="inline-flex items-center gap-2 text-sm mb-8" style={{ color: '#8CC7C4' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            All roles
+          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#888', fontSize: '13px', textDecoration: 'none', marginBottom: '36px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back to roles
           </Link>
 
-          {/* Mobile role badge */}
-          <div className="md:hidden inline-block px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase mb-4" style={{ background: config.color, color: 'white' }}>
-            {config.label}
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{
+              display: 'inline-block', background: config.color,
+              color: 'white', fontSize: '11px', fontWeight: 600,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              padding: '5px 12px', borderRadius: '100px', marginBottom: '16px',
+            }}>
+              {config.label}
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e', marginBottom: '6px' }}>Welcome back</h2>
+            <p style={{ color: '#888', fontSize: '14px' }}>Enter your assigned credentials below</p>
           </div>
 
-          <h2 className="font-display text-3xl font-bold mb-1" style={{ color: '#2C687B' }}>Welcome back</h2>
-          <p className="text-sm mb-8" style={{ color: '#8CC7C4' }}>Enter your assigned credentials below</p>
-
-          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: '#2C687B' }}>Your ID</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#444', marginBottom: '8px' }}>
+                Your ID
+              </label>
               <input
                 type="text"
                 value={displayId}
                 onChange={e => setDisplayId(e.target.value)}
                 placeholder="e.g. STU001"
                 required
-                className="w-full rounded-xl px-4 py-3.5 text-sm outline-none transition-all"
-                style={{ border: '2px solid #e8e8e8', color: '#2C687B', fontFamily: 'DM Sans, sans-serif', background: 'white' }}
-                onFocus={e => e.target.style.borderColor = config.color}
-                onBlur={e => e.target.style.borderColor = '#e8e8e8'}
+                className="input-field"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: '#2C687B' }}>Password</label>
-              <div className="relative">
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#444', marginBottom: '8px' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Your password"
                   required
-                  className="w-full rounded-xl px-4 py-3.5 text-sm outline-none transition-all pr-16"
-                  style={{ border: '2px solid #e8e8e8', color: '#2C687B', fontFamily: 'DM Sans, sans-serif', background: 'white' }}
-                  onFocus={e => e.target.style.borderColor = config.color}
-                  onBlur={e => e.target.style.borderColor = '#e8e8e8'}
+                  className="input-field"
+                  style={{ paddingRight: '60px' }}
                 />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold" style={{ color: '#8CC7C4' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#aaa', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                >
                   {showPass ? 'Hide' : 'Show'}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: '#FFF6F6', border: '1.5px solid #fde8e8' }}>
-                <svg className="flex-shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <p className="text-sm font-medium" style={{ color: '#DB1A1A' }}>{error}</p>
+                <span style={{ fontSize: '13px', color: '#DB1A1A', fontWeight: 500 }}>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 mt-1"
-              style={{ background: config.color, fontFamily: 'DM Sans, sans-serif' }}
+              style={{
+                width: '100%', padding: '14px', borderRadius: '10px',
+                background: loading ? '#ccc' : config.color,
+                color: 'white', fontWeight: 600, fontSize: '14px',
+                border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: 'Inter, sans-serif', marginTop: '4px',
+                transition: 'opacity 0.15s',
+              }}
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
-                  Signing in...
-                </span>
-              ) : `Sign in as ${config.label}`}
+              {loading ? 'Signing in...' : `Sign in as ${config.label}`}
             </button>
           </form>
 
-          <div className="mt-6 pt-6 flex flex-col gap-3 items-center" style={{ borderTop: '1px solid #f0f0f0' }}>
-            <Link href={`/forgot-credentials?role=${role}`} className="text-sm font-medium transition-colors hover:opacity-70" style={{ color: '#2C687B' }}>
+          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #eee', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <Link href={`/forgot-credentials?role=${role}`} style={{ fontSize: '13px', color: '#2C687B', textDecoration: 'none', fontWeight: 500 }}>
               Forgot your credentials?
             </Link>
-            <Link href="/change-password" className="text-sm transition-colors hover:opacity-70" style={{ color: '#8CC7C4' }}>
+            <Link href="/change-password" style={{ fontSize: '13px', color: '#aaa', textDecoration: 'none' }}>
               Change password
             </Link>
           </div>
@@ -175,11 +212,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FFF6F6' }}>
-        <p style={{ color: '#2C687B' }}>Loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#888' }}>Loading...</p></div>}>
       <LoginForm />
     </Suspense>
   )

@@ -4,17 +4,13 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getUser } from '@/lib/auth'
 import { TEACHER_FACTORS } from '@/lib/constants'
 
-interface FactorRating {
-  factor: string
-  rating: number | null
-  comment: string
-}
+interface FactorRating { factor: string; rating: number | null; comment: string }
 
 function RatingSlider({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
   const getInfo = (v: number) => {
-    if (v <= 2) return { label: 'Poor', color: '#DB1A1A' }
-    if (v <= 4) return { label: 'Below Average', color: '#e85d04' }
-    if (v <= 6) return { label: 'Average', color: '#f4a261' }
+    if (v <= 2) return { label: 'Poor', color: '#ef4444' }
+    if (v <= 4) return { label: 'Below Average', color: '#f97316' }
+    if (v <= 6) return { label: 'Average', color: '#eab308' }
     if (v <= 8) return { label: 'Good', color: '#8CC7C4' }
     return { label: 'Excellent', color: '#2C687B' }
   }
@@ -24,10 +20,15 @@ function RatingSlider({ value, onChange }: { value: number | null; onChange: (v:
       <button
         type="button"
         onClick={() => onChange(5)}
-        className="w-full py-4 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-        style={{ border: '2px dashed #8CC7C4', color: '#8CC7C4', background: 'transparent' }}
+        style={{
+          width: '100%', padding: '14px', borderRadius: '10px', border: '1.5px dashed #e0e0e0',
+          background: 'transparent', color: '#bbb', fontSize: '13px', fontWeight: 500,
+          cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#8CC7C4'; (e.currentTarget as HTMLButtonElement).style.color = '#8CC7C4' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#e0e0e0'; (e.currentTarget as HTMLButtonElement).style.color = '#bbb' }}
       >
-        + Tap to rate this factor
+        + Click to rate this factor
       </button>
     )
   }
@@ -37,29 +38,27 @@ function RatingSlider({ value, onChange }: { value: number | null; onChange: (v:
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div>
-          <span className="font-display font-bold" style={{ fontSize: '2.5rem', color: info.color }}>{value}</span>
-          <span className="text-lg ml-1" style={{ color: '#8CC7C4' }}>/10</span>
+          <span style={{ fontSize: '40px', fontWeight: 700, color: info.color, fontFamily: 'Inter, sans-serif' }}>{value}</span>
+          <span style={{ fontSize: '18px', color: '#ccc', marginLeft: '4px' }}>/10</span>
         </div>
-        <span className="text-sm font-semibold px-3 py-1.5 rounded-full" style={{ background: `${info.color}18`, color: info.color }}>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: info.color, background: `${info.color}15`, padding: '5px 12px', borderRadius: '100px' }}>
           {info.label}
         </span>
       </div>
       <input
-        type="range"
-        min={1} max={10} step={1}
-        value={value}
+        type="range" min={1} max={10} step={1} value={value}
         onChange={e => onChange(Number(e.target.value))}
         style={{ '--val': `${pct}%` } as React.CSSProperties}
-        className="w-full mb-2"
+        className="w-full"
       />
-      <div className="flex justify-between mb-3">
-        <span className="text-xs" style={{ color: '#8CC7C4' }}>1 — Poor</span>
-        <span className="text-xs" style={{ color: '#8CC7C4' }}>10 — Excellent</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', marginBottom: '8px' }}>
+        <span style={{ fontSize: '11px', color: '#ccc' }}>1 — Poor</span>
+        <span style={{ fontSize: '11px', color: '#ccc' }}>10 — Excellent</span>
       </div>
-      <button type="button" onClick={() => onChange(null)} className="text-xs" style={{ color: '#8CC7C4' }}>
-        Remove this rating
+      <button type="button" onClick={() => onChange(null)} style={{ fontSize: '12px', color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: 0 }}>
+        Remove rating
       </button>
     </div>
   )
@@ -72,9 +71,7 @@ function RateForm() {
   const isTimetable = name === 'Timetable Management'
   const factors = isTimetable ? ['Overall Rating'] : TEACHER_FACTORS
 
-  const [ratings, setRatings] = useState<FactorRating[]>(
-    factors.map(f => ({ factor: f, rating: null, comment: '' }))
-  )
+  const [ratings, setRatings] = useState<FactorRating[]>(factors.map(f => ({ factor: f, rating: null, comment: '' })))
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -82,22 +79,15 @@ function RateForm() {
     if (!user || user.role !== 'student') { router.push('/'); return }
     const stored = localStorage.getItem('academicRatings')
     if (stored) {
-      const all = JSON.parse(stored)
-      const existing = all.find((r: { teacher_name: string }) => r.teacher_name === name)
+      const existing = JSON.parse(stored).find((r: { teacher_name: string }) => r.teacher_name === name)
       if (existing) {
-        setRatings(factors.map(f => {
-          const found = existing.factors.find((ef: FactorRating) => ef.factor === f)
-          return found || { factor: f, rating: null, comment: '' }
-        }))
+        setRatings(factors.map(f => existing.factors.find((ef: FactorRating) => ef.factor === f) || { factor: f, rating: null, comment: '' }))
       }
     }
   }, [name, router])
 
-  const updateRating = (i: number, rating: number | null) =>
-    setRatings(prev => prev.map((r, idx) => idx === i ? { ...r, rating } : r))
-
-  const updateComment = (i: number, comment: string) =>
-    setRatings(prev => prev.map((r, idx) => idx === i ? { ...r, comment } : r))
+  const updateRating = (i: number, rating: number | null) => setRatings(prev => prev.map((r, idx) => idx === i ? { ...r, rating } : r))
+  const updateComment = (i: number, comment: string) => setRatings(prev => prev.map((r, idx) => idx === i ? { ...r, comment } : r))
 
   const handleSave = () => {
     const ratedFactors = ratings.filter(r => r.rating !== null)
@@ -108,47 +98,52 @@ function RateForm() {
     all.push({ teacher_name: name, factors: ratedFactors })
     localStorage.setItem('academicRatings', JSON.stringify(all))
     setSaving(true)
-    setTimeout(() => router.push('/feedback/academic'), 800)
+    setTimeout(() => router.push('/feedback/academic'), 700)
   }
 
   const ratedCount = ratings.filter(r => r.rating !== null).length
   const initials = name.split(' ').filter(w => /[A-Z]/.test(w)).map(w => w[0]).join('').slice(0, 2) || name.slice(0, 2).toUpperCase()
 
   return (
-    <div className="min-h-screen pb-32" style={{ background: '#FFF6F6' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa', paddingBottom: '100px' }}>
 
-      {/* Header */}
-      <div style={{ background: '#2C687B' }} className="px-6 pt-10 pb-14">
-        <div className="max-w-md mx-auto">
-          <button onClick={() => router.push('/feedback/academic')} className="flex items-center gap-2 text-sm mb-5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      {/* Nav */}
+      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button onClick={() => router.push('/feedback/academic')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            Back to list
+            Back
           </button>
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-lg flex-shrink-0" style={{ background: 'rgba(255,255,255,0.15)', color: 'white' }}>
-              {initials}
-            </div>
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Rating</p>
-              <h2 className="font-display text-xl font-bold text-white leading-tight">{name}</h2>
-              {!isTimetable && (
-                <p className="text-xs mt-1" style={{ color: '#8CC7C4' }}>{ratedCount} of {factors.length} factors rated</p>
-              )}
-            </div>
-          </div>
+          <span style={{ fontSize: '13px', color: '#aaa' }}>{ratedCount}/{factors.length} rated</span>
         </div>
       </div>
 
-      {/* Factor cards */}
-      <div className="px-6 -mt-6">
-        <div className="max-w-md mx-auto flex flex-col gap-4">
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* Teacher header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+          <div style={{
+            width: '52px', height: '52px', borderRadius: '14px',
+            background: '#2C687B', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontSize: '16px', fontWeight: 700, flexShrink: 0,
+          }}>
+            {initials}
+          </div>
+          <div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e' }}>{name}</div>
+            {!isTimetable && <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>Rate any or all of the {factors.length} factors below</div>}
+          </div>
+        </div>
+
+        {/* Factor cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {ratings.map((item, index) => (
-            <div key={item.factor} className="card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm" style={{ color: '#2C687B' }}>{item.factor}</h3>
+            <div key={item.factor} style={{ background: 'white', border: `1px solid ${item.rating !== null ? '#e0f0f2' : '#eaeaea'}`, borderRadius: '14px', padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{item.factor}</span>
                 {item.rating !== null && (
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#edf7f7' }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f0f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                 )}
               </div>
@@ -159,10 +154,15 @@ function RateForm() {
                   onChange={e => updateComment(index, e.target.value)}
                   placeholder="Any additional comments? (optional)"
                   rows={2}
-                  className="w-full mt-4 rounded-xl px-4 py-3 text-sm outline-none resize-none transition-all"
-                  style={{ border: '2px solid #f0f0f0', color: '#2C687B', fontFamily: 'DM Sans, sans-serif', background: '#fafafa' }}
+                  style={{
+                    width: '100%', marginTop: '14px', borderRadius: '10px',
+                    border: '1.5px solid #eee', padding: '10px 14px',
+                    fontSize: '13px', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
+                    resize: 'none', outline: 'none', background: '#fafafa',
+                    transition: 'border-color 0.15s',
+                  }}
                   onFocus={e => e.target.style.borderColor = '#8CC7C4'}
-                  onBlur={e => e.target.style.borderColor = '#f0f0f0'}
+                  onBlur={e => e.target.style.borderColor = '#eee'}
                 />
               )}
             </div>
@@ -171,40 +171,32 @@ function RateForm() {
       </div>
 
       {/* Sticky save */}
-      <div className="fixed bottom-0 left-0 right-0 p-4" style={{ background: 'rgba(255,246,246,0.97)', backdropFilter: 'blur(12px)', borderTop: '1px solid #f0f0f0' }}>
-        <div className="max-w-md mx-auto">
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(250,250,250,0.97)', backdropFilter: 'blur(12px)', borderTop: '1px solid #eaeaea', padding: '16px 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <button
             onClick={handleSave}
             disabled={ratedCount === 0}
-            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all disabled:opacity-40"
             style={{
-              background: saving ? '#8CC7C4' : '#DB1A1A',
-              boxShadow: ratedCount > 0 ? '0 8px 24px rgba(219,26,26,0.25)' : 'none',
+              width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
+              background: saving ? '#8CC7C4' : ratedCount === 0 ? '#f0f0f0' : '#DB1A1A',
+              color: ratedCount === 0 ? '#bbb' : 'white',
+              fontWeight: 700, fontSize: '15px',
+              cursor: ratedCount === 0 ? 'not-allowed' : 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              boxShadow: ratedCount > 0 && !saving ? '0 4px 20px rgba(219,26,26,0.2)' : 'none',
             }}
           >
-            {saving
-              ? <span className="flex items-center justify-center gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  Saved!
-                </span>
-              : `Save (${ratedCount} rated)`
-            }
+            {saving ? '✓ Saved!' : `Save Ratings (${ratedCount} rated)`}
           </button>
-          <p className="text-center text-xs mt-2" style={{ color: '#8CC7C4' }}>Only factors you rated will be saved</p>
         </div>
       </div>
-
     </div>
   )
 }
 
 export default function RateAcademicPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FFF6F6' }}>
-        <p style={{ color: '#2C687B' }}>Loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#888' }}>Loading...</p></div>}>
       <RateForm />
     </Suspense>
   )

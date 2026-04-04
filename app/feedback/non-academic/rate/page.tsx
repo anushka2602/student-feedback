@@ -1,164 +1,157 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getUser } from '@/lib/auth'
-import { NON_ACADEMIC_CATEGORIES } from '@/lib/constants'
-import { supabase } from '@/lib/supabase'
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'Infrastructure': '🏛️',
-  'Cleanliness and Hygiene': '🧹',
-  'Peer Interaction': '🤝',
-  'Safety and Security': '🔒',
-  'Availability of Wi-Fi': '📶',
-  'Cleanliness in Food and Drinking Water': '🥗',
-  'Extracurricular Opportunities': '🎭',
-  'Administration and Management': '📋',
-}
-
-export default function NonAcademicPage() {
+function RateForm() {
   const router = useRouter()
-  const [ratedItems, setRatedItems] = useState<string[]>([])
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const searchParams = useSearchParams()
+  const category = decodeURIComponent(searchParams.get('category') || '')
+  const [rating, setRating] = useState<number | null>(null)
+  const [comment, setComment] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const user = getUser()
     if (!user || user.role !== 'student') { router.push('/'); return }
-    loadRated()
-    const handleFocus = () => loadRated()
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [router])
-
-  const loadRated = () => {
-    if (typeof window === 'undefined') return
     const stored = localStorage.getItem('nonAcademicRatings')
-    if (stored) setRatedItems(JSON.parse(stored).map((r: { category: string }) => r.category))
-    else setRatedItems([])
+    if (stored) {
+      const existing = JSON.parse(stored).find((r: { category: string }) => r.category === category)
+      if (existing) { setRating(existing.rating); setComment(existing.comment || '') }
+    }
+  }, [category, router])
+
+  const getInfo = (v: number) => {
+    if (v <= 2) return { label: 'Poor', color: '#ef4444' }
+    if (v <= 4) return { label: 'Below Average', color: '#f97316' }
+    if (v <= 6) return { label: 'Average', color: '#eab308' }
+    if (v <= 8) return { label: 'Good', color: '#8CC7C4' }
+    return { label: 'Excellent', color: '#2C687B' }
   }
 
-  const handleSubmit = async () => {
-    const user = getUser()
-    if (!user) return
+  const handleSave = () => {
+    if (rating === null) { alert('Please give a rating before saving.'); return }
     const stored = localStorage.getItem('nonAcademicRatings')
-    const allRatings = stored ? JSON.parse(stored) : []
-    if (allRatings.length === 0) { alert('Please rate at least one category before submitting.'); return }
-    if (!confirm('Submit all your ratings?')) return
-    setSubmitting(true)
-    const rows = allRatings.map((r: { category: string; rating: number; comment: string }) => ({
-      student_id: user.id, student_name: user.name, category: r.category, rating: r.rating, comment: r.comment || '',
-    }))
-    const { error } = await supabase.from('non_academic_feedback').insert(rows)
-    if (error) { alert('Error submitting. Please try again.'); setSubmitting(false); return }
-    localStorage.removeItem('nonAcademicRatings')
-    setSubmitted(true)
-    setSubmitting(false)
+    let all = stored ? JSON.parse(stored) : []
+    all = all.filter((r: { category: string }) => r.category !== category)
+    all.push({ category, rating, comment })
+    localStorage.setItem('nonAcademicRatings', JSON.stringify(all))
+    setSaving(true)
+    setTimeout(() => router.push('/feedback/non-academic'), 700)
   }
 
-  if (!mounted) return null
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#FFF6F6' }}>
-        <div className="card p-10 text-center w-full" style={{ maxWidth: '360px' }}>
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: '#edf7f7' }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-          <h2 className="font-display text-2xl font-bold mb-2" style={{ color: '#2C687B' }}>Submitted!</h2>
-          <p className="text-sm mb-6" style={{ color: '#8CC7C4' }}>Your feedback has been recorded. Thank you!</p>
-          <button onClick={() => router.push('/feedback')} className="w-full py-3.5 rounded-xl text-white font-semibold text-sm" style={{ background: '#2C687B' }}>
-            Back to Home
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const progress = Math.round((ratedItems.length / NON_ACADEMIC_CATEGORIES.length) * 100)
+  const info = rating ? getInfo(rating) : null
+  const pct = rating ? ((rating - 1) / 9) * 100 : 0
 
   return (
-    <div className="min-h-screen" style={{ background: '#FFF6F6' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa', paddingBottom: '100px' }}>
 
-      {/* Teal header */}
-      <div style={{ background: '#2C687B' }} className="px-6 pt-10 pb-16">
-        <div className="max-w-md mx-auto">
-          <button onClick={() => router.push('/feedback')} className="flex items-center gap-2 text-sm mb-5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      {/* Nav */}
+      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => router.push('/feedback/non-academic')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Back
           </button>
-          <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: '#8CC7C4' }}>Non-Academic Feedback</p>
-          <h2 className="font-display text-2xl font-bold text-white mb-4">Rate Campus Life</h2>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.25)' }}>
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: 'white' }} />
-            </div>
-            <span className="text-white text-xs font-semibold">{ratedItems.length}/{NON_ACADEMIC_CATEGORIES.length}</span>
-          </div>
         </div>
       </div>
 
-      <div className="px-6 -mt-8 pb-32">
-        <div className="max-w-md mx-auto">
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px' }}>
 
-          {/* Info banner */}
-          <div className="card p-4 mb-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#edf7f7' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ fontSize: '12px', color: '#aaa', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Rating</div>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1a1a2e' }}>{category}</h1>
+        </div>
+
+        <div style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '16px', padding: '24px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '20px' }}>{category}</div>
+
+          {rating === null ? (
+            <button
+              type="button"
+              onClick={() => setRating(5)}
+              style={{
+                width: '100%', padding: '16px', borderRadius: '10px', border: '1.5px dashed #e0e0e0',
+                background: 'transparent', color: '#bbb', fontSize: '13px', fontWeight: 500,
+                cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              + Click to rate
+            </button>
+          ) : (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <div>
+                  <span style={{ fontSize: '40px', fontWeight: 700, color: info!.color }}>{rating}</span>
+                  <span style={{ fontSize: '18px', color: '#ccc', marginLeft: '4px' }}>/10</span>
+                </div>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: info!.color, background: `${info!.color}15`, padding: '5px 12px', borderRadius: '100px' }}>
+                  {info!.label}
+                </span>
+              </div>
+              <input
+                type="range" min={1} max={10} step={1} value={rating}
+                onChange={e => setRating(Number(e.target.value))}
+                style={{ '--val': `${pct}%` } as React.CSSProperties}
+                className="w-full"
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#ccc' }}>1 — Poor</span>
+                <span style={{ fontSize: '11px', color: '#ccc' }}>10 — Excellent</span>
+              </div>
+              <button type="button" onClick={() => setRating(null)} style={{ fontSize: '12px', color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: 0 }}>
+                Remove rating
+              </button>
             </div>
-            <p className="text-sm" style={{ color: '#2C687B' }}>Rating is <strong>optional</strong>. Rate only what you want, then tap Submit.</p>
-          </div>
+          )}
 
-          {/* Category list */}
-          <div className="flex flex-col gap-3 mb-6">
-            {NON_ACADEMIC_CATEGORIES.map((cat) => {
-              const rated = ratedItems.includes(cat)
-              return (
-                <button
-                  key={cat}
-                  onClick={() => router.push(`/feedback/non-academic/rate?category=${encodeURIComponent(cat)}`)}
-                  className="card flex items-center gap-4 p-4 text-left transition-all duration-150 hover:scale-[1.01] active:scale-[0.99]"
-                  style={rated ? { borderLeft: '4px solid #8CC7C4' } : {}}
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl" style={{ background: rated ? '#edf7f7' : '#f8f8f8' }}>
-                    {CATEGORY_ICONS[cat] || '📊'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm" style={{ color: '#2C687B' }}>{cat}</p>
-                  </div>
-                  {rated ? (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: '#edf7f7' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      <span className="text-xs font-bold" style={{ color: '#2C687B' }}>Rated</span>
-                    </div>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          {rating !== null && (
+            <textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="Any additional comments? (optional)"
+              rows={3}
+              style={{
+                width: '100%', marginTop: '16px', borderRadius: '10px',
+                border: '1.5px solid #eee', padding: '12px 14px',
+                fontSize: '13px', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
+                resize: 'none', outline: 'none', background: '#fafafa',
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => e.target.style.borderColor = '#8CC7C4'}
+              onBlur={e => e.target.style.borderColor = '#eee'}
+            />
+          )}
         </div>
       </div>
 
-      {/* Sticky submit */}
-      <div className="fixed bottom-0 left-0 right-0 p-4" style={{ background: 'rgba(255,246,246,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #f0f0f0' }}>
-        <div className="max-w-md mx-auto">
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(250,250,250,0.97)', backdropFilter: 'blur(12px)', borderTop: '1px solid #eaeaea', padding: '16px 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <button
-            onClick={handleSubmit}
-            disabled={submitting || ratedItems.length === 0}
-            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all disabled:opacity-40"
-            style={{ background: '#2C687B', boxShadow: ratedItems.length > 0 ? '0 8px 24px rgba(44,104,123,0.3)' : 'none' }}
+            onClick={handleSave}
+            disabled={rating === null}
+            style={{
+              width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
+              background: saving ? '#8CC7C4' : rating === null ? '#f0f0f0' : '#2C687B',
+              color: rating === null ? '#bbb' : 'white',
+              fontWeight: 700, fontSize: '15px',
+              cursor: rating === null ? 'not-allowed' : 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              boxShadow: rating !== null && !saving ? '0 4px 20px rgba(44,104,123,0.2)' : 'none',
+            }}
           >
-            {submitting ? 'Submitting...' : `Submit Ratings (${ratedItems.length} rated)`}
+            {saving ? '✓ Saved!' : 'Save Rating'}
           </button>
         </div>
       </div>
-
     </div>
+  )
+}
+
+export default function RateNonAcademicPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#888' }}>Loading...</p></div>}>
+      <RateForm />
+    </Suspense>
   )
 }

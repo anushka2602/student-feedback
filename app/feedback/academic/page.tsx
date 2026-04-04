@@ -27,12 +27,8 @@ export default function AcademicPage() {
   const loadRated = () => {
     if (typeof window === 'undefined') return
     const stored = localStorage.getItem('academicRatings')
-    if (stored) {
-      const all = JSON.parse(stored)
-      setRatedItems(all.map((r: { teacher_name: string }) => r.teacher_name))
-    } else {
-      setRatedItems([])
-    }
+    if (stored) setRatedItems(JSON.parse(stored).map((r: { teacher_name: string }) => r.teacher_name))
+    else setRatedItems([])
   }
 
   const handleSubmit = async () => {
@@ -43,14 +39,12 @@ export default function AcademicPage() {
     if (allRatings.length === 0) { alert('Please rate at least one item before submitting.'); return }
     if (!confirm('Submit all your ratings? You cannot change them after submitting.')) return
     setSubmitting(true)
-
     const rows: { student_id: string; student_name: string; teacher_name: string; factor: string; rating: number; comment: string }[] = []
     for (const item of allRatings) {
       for (const f of item.factors) {
         rows.push({ student_id: user.id, student_name: user.name, teacher_name: item.teacher_name, factor: f.factor, rating: f.rating, comment: f.comment || '' })
       }
     }
-
     const { error } = await supabase.from('academic_feedback').insert(rows)
     if (error) { alert('Error submitting. Please try again.'); setSubmitting(false); return }
     localStorage.removeItem('academicRatings')
@@ -62,16 +56,14 @@ export default function AcademicPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#FFF6F6' }}>
-        <div className="card p-10 text-center w-full" style={{ maxWidth: '360px' }}>
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: '#edf7f7' }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+      <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #eaeaea', padding: '48px', textAlign: 'center', maxWidth: '360px', width: '100%' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f0f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <h2 className="font-display text-2xl font-bold mb-2" style={{ color: '#2C687B' }}>Submitted!</h2>
-          <p className="text-sm mb-6" style={{ color: '#8CC7C4' }}>Thank you for your valuable feedback.</p>
-          <button onClick={() => router.push('/feedback')} className="w-full py-3.5 rounded-xl text-white font-semibold text-sm" style={{ background: '#2C687B' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>Submitted!</h2>
+          <p style={{ color: '#888', fontSize: '14px', marginBottom: '28px' }}>Thank you for your valuable feedback.</p>
+          <button onClick={() => router.push('/feedback')} style={{ background: '#2C687B', color: 'white', border: 'none', borderRadius: '10px', padding: '12px 28px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
             Back to Home
           </button>
         </div>
@@ -82,88 +74,94 @@ export default function AcademicPage() {
   const progress = Math.round((ratedItems.length / ALL_ITEMS.length) * 100)
 
   return (
-    <div className="min-h-screen" style={{ background: '#FFF6F6' }}>
+    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
 
-      {/* Red header */}
-      <div style={{ background: '#DB1A1A' }} className="px-6 pt-10 pb-16">
-        <div className="max-w-md mx-auto">
-          <button onClick={() => router.push('/feedback')} className="flex items-center gap-2 text-sm mb-5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+      {/* Nav */}
+      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button onClick={() => router.push('/feedback')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Back
           </button>
-          <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Academic Feedback</p>
-          <h2 className="font-display text-2xl font-bold text-white mb-4">Rate Teachers</h2>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.25)' }}>
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: 'white' }} />
-            </div>
-            <span className="text-white text-xs font-semibold">{ratedItems.length}/{ALL_ITEMS.length}</span>
-          </div>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>Academic Feedback</span>
+          <span style={{ fontSize: '13px', color: '#888' }}>{ratedItems.length}/{ALL_ITEMS.length} rated</span>
+        </div>
+        {/* Progress bar */}
+        <div style={{ height: '3px', background: '#f0f0f0' }}>
+          <div style={{ height: '100%', background: '#DB1A1A', width: `${progress}%`, transition: 'width 0.4s ease' }} />
         </div>
       </div>
 
-      <div className="px-6 -mt-8 pb-32">
-        <div className="max-w-md mx-auto">
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px 120px' }}>
 
-          {/* Info banner */}
-          <div className="card p-4 mb-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#FFF6F6' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
-            <p className="text-sm" style={{ color: '#2C687B' }}>Rating is <strong>optional</strong>. Rate only what you want, then tap Submit.</p>
-          </div>
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>Rate Teachers</h1>
+          <p style={{ color: '#888', fontSize: '13px' }}>Tap any name to rate. All factors are optional.</p>
+        </div>
 
-          {/* Teacher list */}
-          <div className="flex flex-col gap-3 mb-6">
-            {ALL_ITEMS.map((item, i) => {
-              const rated = ratedItems.includes(item)
-              const isTimetable = item === 'Timetable Management'
-              return (
-                <button
-                  key={item}
-                  onClick={() => router.push(`/feedback/academic/rate?name=${encodeURIComponent(item)}`)}
-                  className="card flex items-center gap-4 p-4 text-left transition-all duration-150 hover:scale-[1.01] active:scale-[0.99]"
-                  style={rated ? { borderLeft: '4px solid #8CC7C4' } : {}}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-display font-bold text-sm"
-                    style={{ background: rated ? '#edf7f7' : '#f8f8f8', color: rated ? '#2C687B' : '#8CC7C4' }}
-                  >
-                    {isTimetable ? '📅' : (i + 1)}
+        {/* Teacher list */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {ALL_ITEMS.map((item, i) => {
+            const rated = ratedItems.includes(item)
+            const isTimetable = item === 'Timetable Management'
+            return (
+              <button
+                key={item}
+                onClick={() => router.push(`/feedback/academic/rate?name=${encodeURIComponent(item)}`)}
+                style={{
+                  background: 'white', border: `1px solid ${rated ? '#8CC7C4' : '#eaeaea'}`,
+                  borderRadius: '12px', padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: '16px',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                  background: rated ? '#f0f9fa' : '#f8f8f8',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: isTimetable ? '18px' : '14px', fontWeight: 700,
+                  color: rated ? '#2C687B' : '#bbb',
+                }}>
+                  {isTimetable ? '📅' : i + 1}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item}</div>
+                  {!isTimetable && <div style={{ fontSize: '12px', color: '#aaa', marginTop: '2px' }}>8 rating factors</div>}
+                </div>
+                {rated ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f0f9fa', padding: '5px 12px', borderRadius: '100px', flexShrink: 0 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C687B' }}>Rated</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate" style={{ color: '#2C687B' }}>{item}</p>
-                    {!isTimetable && <p className="text-xs mt-0.5" style={{ color: '#8CC7C4' }}>8 rating factors</p>}
-                  </div>
-                  {rated ? (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0" style={{ background: '#edf7f7' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      <span className="text-xs font-bold" style={{ color: '#2C687B' }}>Rated</span>
-                    </div>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d0d0d0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Sticky submit */}
-      <div className="fixed bottom-0 left-0 right-0 p-4" style={{ background: 'rgba(255,246,246,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #f0f0f0' }}>
-        <div className="max-w-md mx-auto">
+      {/* Sticky footer */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(250,250,250,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #eaeaea', padding: '16px 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <button
             onClick={handleSubmit}
             disabled={submitting || ratedItems.length === 0}
-            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all disabled:opacity-40"
-            style={{ background: '#DB1A1A', boxShadow: ratedItems.length > 0 ? '0 8px 24px rgba(219,26,26,0.3)' : 'none' }}
+            style={{
+              width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
+              background: ratedItems.length === 0 ? '#f0f0f0' : '#DB1A1A',
+              color: ratedItems.length === 0 ? '#bbb' : 'white',
+              fontWeight: 700, fontSize: '15px', cursor: ratedItems.length === 0 ? 'not-allowed' : 'pointer',
+              fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
+              boxShadow: ratedItems.length > 0 ? '0 4px 20px rgba(219,26,26,0.25)' : 'none',
+            }}
           >
-            {submitting ? 'Submitting...' : `Submit Ratings (${ratedItems.length} rated)`}
+            {submitting ? 'Submitting...' : `Submit Feedback${ratedItems.length > 0 ? ` (${ratedItems.length} rated)` : ''}`}
           </button>
         </div>
       </div>
-
     </div>
   )
 }
