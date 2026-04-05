@@ -50,51 +50,60 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF6F6] flex flex-col items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md border border-gray-100">
-        <h2 className="text-2xl font-extrabold text-[#2C687B] mb-1">Change Password</h2>
-        <p className="text-[#8CC7C4] text-sm mb-7">Update your account password</p>
+    <div className="flex min-h-screen flex-col items-center justify-center p-5 sm:p-6">
+      <div className="surface w-full max-w-md rounded-3xl p-6 fade-in sm:p-8">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Change password</h2>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Update your account password securely.</p>
 
         {success ? (
-          <div className="text-center py-6">
-            <div className="text-5xl mb-4">✅</div>
-            <p className="text-[#2C687B] font-semibold mb-6">Password updated successfully!</p>
-            <button onClick={() => router.push(getBackPath())}
-              className="bg-[#2C687B] text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90">
-              Go Back
+          <div className="py-8 text-center">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-3xl dark:bg-teal-950/50">✅</div>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Password updated successfully</p>
+            <button
+              type="button"
+              onClick={() => router.push(getBackPath())}
+              className="mt-8 min-h-12 w-full rounded-xl bg-[#2C687B] py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 transition-opacity hover:opacity-95"
+            >
+              Go back
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
             {[
-              { label: 'Current Password', val: oldPass, set: setOldPass },
-              { label: 'New Password', val: newPass, set: setNewPass },
-              { label: 'Confirm New Password', val: confirm, set: setConfirm },
+              { label: 'Current password', val: oldPass, set: setOldPass },
+              { label: 'New password', val: newPass, set: setNewPass },
+              { label: 'Confirm new password', val: confirm, set: setConfirm },
             ].map((field) => (
               <div key={field.label}>
-                <label className="text-[#2C687B] font-semibold text-sm mb-2 block">{field.label}</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{field.label}</label>
                 <input
                   type="password"
                   value={field.val}
-                  onChange={e => field.set(e.target.value)}
+                  onChange={(e) => field.set(e.target.value)}
                   required
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#8CC7C4] text-[#2C687B] font-medium"
+                  className="input-field"
                 />
               </div>
             ))}
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-[#DB1A1A] text-sm font-medium">❌ {error}</p>
+            {error ? (
+              <div className="rounded-xl border border-rose-200/80 bg-rose-50/90 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/40">
+                <p className="text-sm font-medium text-[#DB1A1A]">{error}</p>
               </div>
-            )}
+            ) : null}
 
-            <button type="submit" disabled={loading}
-              className="py-4 rounded-xl bg-[#DB1A1A] text-white font-bold mt-2 hover:opacity-90 disabled:opacity-50">
-              {loading ? 'Updating...' : 'Update Password'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 min-h-12 rounded-xl bg-[#DB1A1A] py-3.5 text-sm font-bold text-white shadow-lg shadow-rose-900/25 transition-opacity hover:opacity-95 disabled:opacity-50"
+            >
+              {loading ? 'Updating...' : 'Update password'}
             </button>
-            <button type="button" onClick={() => router.push(getBackPath())}
-              className="text-center text-[#8CC7C4] text-sm hover:text-[#2C687B]">
+            <button
+              type="button"
+              onClick={() => router.push(getBackPath())}
+              className="text-center text-sm font-medium text-[#2C687B] hover:underline dark:text-teal-300"
+            >
               ← Back
             </button>
           </form>

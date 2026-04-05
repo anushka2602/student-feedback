@@ -8,8 +8,9 @@ import Link from 'next/link'
 type AcademicRow = { id: string; student_name: string; teacher_name: string; factor: string; rating: number; comment: string; submitted_at: string }
 type NonAcademicRow = { id: string; student_name: string; category: string; rating: number; comment: string; submitted_at: string }
 
-const getRatingColor = (r: number) => r >= 8 ? '#2C687B' : r >= 5 ? '#f97316' : '#DB1A1A'
-const getRatingBg = (r: number) => r >= 8 ? '#f0f9fa' : r >= 5 ? '#fff7ed' : '#fff5f5'
+const getRatingColor = (r: number) => (r >= 8 ? '#2C687B' : r >= 5 ? '#ea580c' : '#DB1A1A')
+const getRatingBg = (r: number) =>
+  r >= 8 ? 'bg-teal-50 dark:bg-teal-950/55' : r >= 5 ? 'bg-orange-50 dark:bg-orange-950/45' : 'bg-rose-50 dark:bg-rose-950/45'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -23,7 +24,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     setMounted(true)
     const user = getUser()
-    if (!user || user.role !== 'admin') { router.push('/'); return }
+    if (!user || user.role !== 'admin') {
+      router.push('/')
+      return
+    }
     fetchAll()
   }, [router])
 
@@ -37,165 +41,201 @@ export default function AdminDashboard() {
     setLoading(false)
   }
 
-  const uniqueTeachers = [...new Set(academic.map(r => r.teacher_name))]
-  const filteredAcademic = filterTeacher ? academic.filter(r => r.teacher_name === filterTeacher) : academic
+  const uniqueTeachers = [...new Set(academic.map((r) => r.teacher_name))]
+  const filteredAcademic = filterTeacher ? academic.filter((r) => r.teacher_name === filterTeacher) : academic
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-  })
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   if (!mounted || loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888', fontSize: '14px' }}>Loading all feedback data...</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="animate-pulse-soft text-sm text-slate-500 dark:text-slate-400">Loading all feedback data...</p>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
-
-      {/* Nav */}
-      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    <div className="min-h-screen pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+      <header className="glass-nav sticky top-0 z-10 px-4 sm:px-6">
+        <div className="mx-auto flex min-h-14 max-w-4xl items-center justify-between py-2">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#DB1A1A] shadow-md shadow-rose-900/20">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </div>
-            <span style={{ fontWeight: 600, fontSize: '14px', color: '#1a1a2e' }}>Admin Panel</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Admin Panel</span>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Link href="/change-password" style={{ fontSize: '12px', color: '#2C687B', textDecoration: 'none', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', border: '1px solid #e0f0f2', background: '#f0f9fa' }}>
+          <div className="flex items-center gap-2">
+            <Link href="/change-password" className="btn-header-accent">
               Password
             </Link>
-            <button onClick={() => { clearUser(); router.push('/') }} style={{ fontSize: '12px', color: '#888', background: 'none', border: '1px solid #eee', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+            <button
+              type="button"
+              onClick={() => {
+                clearUser()
+                router.push('/')
+              }}
+              className="btn-header-muted"
+            >
               Logout
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 24px' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>All Feedback</h1>
-          <p style={{ color: '#888', fontSize: '14px' }}>Complete overview of all student submissions</p>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">All Feedback</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Complete overview of all student submissions</p>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+        <div className="mb-8 grid gap-4 sm:grid-cols-3">
           {[
-            { label: 'Academic Responses', value: academic.length, color: '#DB1A1A' },
-            { label: 'Non-Academic Responses', value: nonAcademic.length, color: '#2C687B' },
-            { label: 'Total Submissions', value: academic.length + nonAcademic.length, color: '#555' },
-          ].map(stat => (
-            <div key={stat.label} style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '14px', padding: '20px' }}>
-              <div style={{ fontSize: '28px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-              <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{stat.label}</div>
+            { label: 'Academic Responses', value: academic.length, accent: 'text-[#DB1A1A]', bar: 'bg-[#DB1A1A]/15' },
+            { label: 'Non-Academic Responses', value: nonAcademic.length, accent: 'text-[#2C687B]', bar: 'bg-[#2C687B]/15' },
+            {
+              label: 'Total Submissions',
+              value: academic.length + nonAcademic.length,
+              accent: 'text-slate-700 dark:text-slate-200',
+              bar: 'bg-slate-200/80 dark:bg-slate-600/50',
+            },
+          ].map((stat) => (
+            <div key={stat.label} className="surface relative overflow-hidden rounded-2xl p-5">
+              <div className={`absolute inset-x-0 top-0 h-1 ${stat.bar}`} aria-hidden />
+              <div className={`text-3xl font-bold tabular-nums ${stat.accent}`}>{stat.value}</div>
+              <div className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{stat.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {(['academic', 'non-academic'] as const).map(t => (
+        <div className="mb-5 inline-flex max-w-full flex-wrap rounded-xl border border-slate-200/80 bg-white/60 p-1 shadow-sm backdrop-blur-sm dark:border-slate-600/60 dark:bg-slate-900/50">
+          {(['academic', 'non-academic'] as const).map((t) => (
             <button
               key={t}
+              type="button"
               onClick={() => setTab(t)}
-              style={{
-                padding: '9px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'Inter, sans-serif', border: 'none',
-                background: tab === t ? '#1a1a2e' : 'white',
-                color: tab === t ? 'white' : '#888',
-                boxShadow: tab === t ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
-                transition: 'all 0.15s',
-              }}
+              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition-all sm:px-4 ${
+                tab === t
+                  ? 'bg-slate-900 text-white shadow-md dark:bg-slate-100 dark:text-slate-900'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
             >
               {t === 'academic' ? `Academic (${academic.length})` : `Non-Academic (${nonAcademic.length})`}
             </button>
           ))}
         </div>
 
-        {/* Academic */}
         {tab === 'academic' && (
           <>
-            <div style={{ marginBottom: '16px' }}>
+            <div className="mb-4">
               <select
                 value={filterTeacher}
-                onChange={e => setFilterTeacher(e.target.value)}
-                style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid #eaeaea', fontSize: '13px', color: '#1a1a2e', fontFamily: 'Inter, sans-serif', background: 'white', outline: 'none', cursor: 'pointer' }}
+                onChange={(e) => setFilterTeacher(e.target.value)}
+                className="input-field max-w-full cursor-pointer py-2.5 text-sm shadow-sm sm:max-w-xs dark:text-slate-100"
               >
                 <option value="">All Teachers</option>
-                {uniqueTeachers.map(t => <option key={t} value={t}>{t}</option>)}
+                {uniqueTeachers.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="flex flex-col gap-3">
               {filteredAcademic.length === 0 ? (
-                <div style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '14px', padding: '40px', textAlign: 'center' }}>
-                  <p style={{ color: '#aaa', fontSize: '14px' }}>No academic feedback yet.</p>
+                <div className="surface rounded-2xl px-6 py-14 text-center">
+                  <p className="text-sm text-slate-400 dark:text-slate-500">No academic feedback yet.</p>
                 </div>
-              ) : filteredAcademic.map(row => (
-                <div key={row.id} style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '12px', padding: '16px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{row.teacher_name}</span>
-                        <span style={{ fontSize: '11px', color: '#888', background: '#f5f5f5', padding: '2px 8px', borderRadius: '100px' }}>{row.factor}</span>
+              ) : (
+                filteredAcademic.map((row) => (
+                  <article key={row.id} className="surface rounded-2xl p-5 transition-shadow hover:shadow-md sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{row.teacher_name}</span>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {row.factor}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                          {row.student_name} · {formatDate(row.submitted_at)}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#aaa' }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        {row.student_name} · {formatDate(row.submitted_at)}
+                      <div
+                        className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${getRatingBg(row.rating)} sm:h-[52px] sm:w-[52px]`}
+                      >
+                        <span className="text-lg font-bold leading-none" style={{ color: getRatingColor(row.rating) }}>
+                          {row.rating}
+                        </span>
+                        <span className="text-[10px] font-semibold opacity-80" style={{ color: getRatingColor(row.rating) }}>
+                          /10
+                        </span>
                       </div>
                     </div>
-                    <div style={{ flexShrink: 0, width: '48px', height: '48px', borderRadius: '12px', background: getRatingBg(row.rating), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1, color: getRatingColor(row.rating) }}>{row.rating}</span>
-                      <span style={{ fontSize: '10px', color: getRatingColor(row.rating) }}>/10</span>
-                    </div>
-                  </div>
-                  {row.comment && (
-                    <div style={{ marginTop: '12px', background: '#f8f8f8', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#555', borderLeft: '3px solid #8CC7C4' }}>
-                      {row.comment}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {row.comment ? (
+                      <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/80 py-3 pl-4 pr-3 text-sm leading-relaxed text-slate-600 border-l-[3px] border-l-[#8CC7C4] dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+                        {row.comment}
+                      </div>
+                    ) : null}
+                  </article>
+                ))
+              )}
             </div>
           </>
         )}
 
-        {/* Non-Academic */}
         {tab === 'non-academic' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-3">
             {nonAcademic.length === 0 ? (
-              <div style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '14px', padding: '40px', textAlign: 'center' }}>
-                <p style={{ color: '#aaa', fontSize: '14px' }}>No non-academic feedback yet.</p>
+              <div className="surface rounded-2xl px-6 py-14 text-center">
+                <p className="text-sm text-slate-400 dark:text-slate-500">No non-academic feedback yet.</p>
               </div>
-            ) : nonAcademic.map(row => (
-              <div key={row.id} style={{ background: 'white', border: '1px solid #eaeaea', borderRadius: '12px', padding: '16px 20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', marginBottom: '4px' }}>{row.category}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#aaa' }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                      {row.student_name} · {formatDate(row.submitted_at)}
+            ) : (
+              nonAcademic.map((row) => (
+                <article key={row.id} className="surface rounded-2xl p-5 transition-shadow hover:shadow-md sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1">
+                      <div className="mb-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{row.category}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        {row.student_name} · {formatDate(row.submitted_at)}
+                      </div>
+                    </div>
+                    <div
+                      className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${getRatingBg(row.rating)} sm:h-[52px] sm:w-[52px]`}
+                    >
+                      <span className="text-lg font-bold leading-none" style={{ color: getRatingColor(row.rating) }}>
+                        {row.rating}
+                      </span>
+                      <span className="text-[10px] font-semibold opacity-80" style={{ color: getRatingColor(row.rating) }}>
+                        /10
+                      </span>
                     </div>
                   </div>
-                  <div style={{ flexShrink: 0, width: '48px', height: '48px', borderRadius: '12px', background: getRatingBg(row.rating), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1, color: getRatingColor(row.rating) }}>{row.rating}</span>
-                    <span style={{ fontSize: '10px', color: getRatingColor(row.rating) }}>/10</span>
-                  </div>
-                </div>
-                {row.comment && (
-                  <div style={{ marginTop: '12px', background: '#f8f8f8', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#555', borderLeft: '3px solid #8CC7C4' }}>
-                    {row.comment}
-                  </div>
-                )}
-              </div>
-            ))}
+                  {row.comment ? (
+                    <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/80 py-3 pl-4 pr-3 text-sm leading-relaxed text-slate-600 border-l-[3px] border-l-[#8CC7C4] dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+                      {row.comment}
+                    </div>
+                  ) : null}
+                </article>
+              ))
+            )}
           </div>
         )}
       </div>

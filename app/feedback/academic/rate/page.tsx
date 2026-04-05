@@ -4,7 +4,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getUser } from '@/lib/auth'
 import { TEACHER_FACTORS } from '@/lib/constants'
 
-interface FactorRating { factor: string; rating: number | null; comment: string }
+interface FactorRating {
+  factor: string
+  rating: number | null
+  comment: string
+}
 
 function RatingSlider({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
   const getInfo = (v: number) => {
@@ -20,13 +24,7 @@ function RatingSlider({ value, onChange }: { value: number | null; onChange: (v:
       <button
         type="button"
         onClick={() => onChange(5)}
-        style={{
-          width: '100%', padding: '14px', borderRadius: '10px', border: '1.5px dashed #e0e0e0',
-          background: 'transparent', color: '#bbb', fontSize: '13px', fontWeight: 500,
-          cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#8CC7C4'; (e.currentTarget as HTMLButtonElement).style.color = '#8CC7C4' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#e0e0e0'; (e.currentTarget as HTMLButtonElement).style.color = '#bbb' }}
+        className="min-h-12 w-full rounded-xl border-2 border-dashed border-slate-200 bg-transparent py-3.5 text-sm font-medium text-slate-400 transition-colors hover:border-[#8CC7C4] hover:text-[#2C687B] dark:border-slate-600 dark:text-slate-500 dark:hover:border-teal-600 dark:hover:text-teal-300"
       >
         + Click to rate this factor
       </button>
@@ -38,26 +36,39 @@ function RatingSlider({ value, onChange }: { value: number | null; onChange: (v:
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <span style={{ fontSize: '40px', fontWeight: 700, color: info.color, fontFamily: 'Inter, sans-serif' }}>{value}</span>
-          <span style={{ fontSize: '18px', color: '#ccc', marginLeft: '4px' }}>/10</span>
+          <span className="text-4xl font-bold tabular-nums" style={{ color: info.color }}>
+            {value}
+          </span>
+          <span className="ml-1 text-lg text-slate-300 dark:text-slate-600">/10</span>
         </div>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: info.color, background: `${info.color}15`, padding: '5px 12px', borderRadius: '100px' }}>
+        <span
+          className="rounded-full px-3 py-1.5 text-xs font-semibold"
+          style={{ color: info.color, backgroundColor: `${info.color}18` }}
+        >
           {info.label}
         </span>
       </div>
       <input
-        type="range" min={1} max={10} step={1} value={value}
-        onChange={e => onChange(Number(e.target.value))}
+        type="range"
+        min={1}
+        max={10}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
         style={{ '--val': `${pct}%` } as React.CSSProperties}
         className="w-full"
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', marginBottom: '8px' }}>
-        <span style={{ fontSize: '11px', color: '#ccc' }}>1 — Poor</span>
-        <span style={{ fontSize: '11px', color: '#ccc' }}>10 — Excellent</span>
+      <div className="mb-2 mt-2 flex justify-between text-[11px] text-slate-400 dark:text-slate-500">
+        <span>1 — Poor</span>
+        <span>10 — Excellent</span>
       </div>
-      <button type="button" onClick={() => onChange(null)} style={{ fontSize: '12px', color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: 0 }}>
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className="min-h-10 p-0 text-xs font-medium text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+      >
         Remove rating
       </button>
     </div>
@@ -71,27 +82,37 @@ function RateForm() {
   const isTimetable = name === 'Timetable Management'
   const factors = isTimetable ? ['Overall Rating'] : TEACHER_FACTORS
 
-  const [ratings, setRatings] = useState<FactorRating[]>(factors.map(f => ({ factor: f, rating: null, comment: '' })))
+  const [ratings, setRatings] = useState<FactorRating[]>(factors.map((f) => ({ factor: f, rating: null, comment: '' })))
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const user = getUser()
-    if (!user || user.role !== 'student') { router.push('/'); return }
+    if (!user || user.role !== 'student') {
+      router.push('/')
+      return
+    }
     const stored = localStorage.getItem('academicRatings')
     if (stored) {
       const existing = JSON.parse(stored).find((r: { teacher_name: string }) => r.teacher_name === name)
       if (existing) {
-        setRatings(factors.map(f => existing.factors.find((ef: FactorRating) => ef.factor === f) || { factor: f, rating: null, comment: '' }))
+        setRatings(
+          factors.map(
+            (f) => existing.factors.find((ef: FactorRating) => ef.factor === f) || { factor: f, rating: null, comment: '' },
+          ),
+        )
       }
     }
   }, [name, router])
 
-  const updateRating = (i: number, rating: number | null) => setRatings(prev => prev.map((r, idx) => idx === i ? { ...r, rating } : r))
-  const updateComment = (i: number, comment: string) => setRatings(prev => prev.map((r, idx) => idx === i ? { ...r, comment } : r))
+  const updateRating = (i: number, rating: number | null) => setRatings((prev) => prev.map((r, idx) => (idx === i ? { ...r, rating } : r)))
+  const updateComment = (i: number, comment: string) => setRatings((prev) => prev.map((r, idx) => (idx === i ? { ...r, comment } : r)))
 
   const handleSave = () => {
-    const ratedFactors = ratings.filter(r => r.rating !== null)
-    if (ratedFactors.length === 0) { alert('Please give at least one rating before saving.'); return }
+    const ratedFactors = ratings.filter((r) => r.rating !== null)
+    if (ratedFactors.length === 0) {
+      alert('Please give at least one rating before saving.')
+      return
+    }
     const stored = localStorage.getItem('academicRatings')
     let all = stored ? JSON.parse(stored) : []
     all = all.filter((r: { teacher_name: string }) => r.teacher_name !== name)
@@ -101,89 +122,93 @@ function RateForm() {
     setTimeout(() => router.push('/feedback/academic'), 700)
   }
 
-  const ratedCount = ratings.filter(r => r.rating !== null).length
-  const initials = name.split(' ').filter(w => /[A-Z]/.test(w)).map(w => w[0]).join('').slice(0, 2) || name.slice(0, 2).toUpperCase()
+  const ratedCount = ratings.filter((r) => r.rating !== null).length
+  const initials =
+    name
+      .split(' ')
+      .filter((w) => /[A-Z]/.test(w))
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2) || name.slice(0, 2).toUpperCase()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa', paddingBottom: '100px' }}>
-
-      {/* Nav */}
-      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button onClick={() => router.push('/feedback/academic')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <div className="min-h-screen pb-32">
+      <header className="glass-nav sticky top-0 z-10 px-4 sm:px-6">
+        <div className="mx-auto flex min-h-12 max-w-xl items-center justify-between py-2">
+          <button
+            type="button"
+            onClick={() => router.push('/feedback/academic')}
+            className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
             Back
           </button>
-          <span style={{ fontSize: '13px', color: '#aaa' }}>{ratedCount}/{factors.length} rated</span>
+          <span className="text-xs font-medium tabular-nums text-slate-400 dark:text-slate-500">
+            {ratedCount}/{factors.length} rated
+          </span>
         </div>
-      </div>
+      </header>
 
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px' }}>
-
-        {/* Teacher header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-          <div style={{
-            width: '52px', height: '52px', borderRadius: '14px',
-            background: '#2C687B', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontSize: '16px', fontWeight: 700, flexShrink: 0,
-          }}>
+      <div className="mx-auto max-w-xl px-4 py-8 sm:px-6">
+        <div className="mb-8 flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#2C687B] text-base font-bold text-white shadow-lg shadow-teal-900/25">
             {initials}
           </div>
-          <div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a2e' }}>{name}</div>
-            {!isTimetable && <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>Rate any or all of the {factors.length} factors below</div>}
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50 sm:text-xl">{name}</h1>
+            {!isTimetable ? (
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Rate any or all of the {factors.length} factors below</p>
+            ) : null}
           </div>
         </div>
 
-        {/* Factor cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="flex flex-col gap-4">
           {ratings.map((item, index) => (
-            <div key={item.factor} style={{ background: 'white', border: `1px solid ${item.rating !== null ? '#e0f0f2' : '#eaeaea'}`, borderRadius: '14px', padding: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>{item.factor}</span>
-                {item.rating !== null && (
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f0f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div
+              key={item.factor}
+              className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${
+                item.rating !== null
+                  ? 'border-[#8CC7C4]/40 bg-white/95 dark:border-teal-800/50 dark:bg-slate-900/80'
+                  : 'border-slate-200/80 bg-white/95 dark:border-slate-600/50 dark:bg-slate-900/70'
+              }`}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.factor}</span>
+                {item.rating !== null ? (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-50 dark:bg-teal-950/60">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   </div>
-                )}
+                ) : null}
               </div>
-              <RatingSlider value={item.rating} onChange={v => updateRating(index, v)} />
-              {item.rating !== null && (
+              <RatingSlider value={item.rating} onChange={(v) => updateRating(index, v)} />
+              {item.rating !== null ? (
                 <textarea
                   value={item.comment}
-                  onChange={e => updateComment(index, e.target.value)}
+                  onChange={(e) => updateComment(index, e.target.value)}
                   placeholder="Any additional comments? (optional)"
                   rows={2}
-                  style={{
-                    width: '100%', marginTop: '14px', borderRadius: '10px',
-                    border: '1.5px solid #eee', padding: '10px 14px',
-                    fontSize: '13px', color: '#1a1a2e', fontFamily: 'Inter, sans-serif',
-                    resize: 'none', outline: 'none', background: '#fafafa',
-                    transition: 'border-color 0.15s',
-                  }}
-                  onFocus={e => e.target.style.borderColor = '#8CC7C4'}
-                  onBlur={e => e.target.style.borderColor = '#eee'}
+                  className="input-field mt-4 resize-none bg-slate-50/80 dark:bg-slate-800/40"
                 />
-              )}
+              ) : null}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Sticky save */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(250,250,250,0.97)', backdropFilter: 'blur(12px)', borderTop: '1px solid #eaeaea', padding: '16px 24px' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+      <div className="sticky-footer-bar fixed bottom-0 left-0 right-0 z-10 px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-xl">
           <button
+            type="button"
             onClick={handleSave}
             disabled={ratedCount === 0}
+            className="min-h-12 w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
             style={{
-              width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
-              background: saving ? '#8CC7C4' : ratedCount === 0 ? '#f0f0f0' : '#DB1A1A',
-              color: ratedCount === 0 ? '#bbb' : 'white',
-              fontWeight: 700, fontSize: '15px',
-              cursor: ratedCount === 0 ? 'not-allowed' : 'pointer',
-              fontFamily: 'Inter, sans-serif',
-              boxShadow: ratedCount > 0 && !saving ? '0 4px 20px rgba(219,26,26,0.2)' : 'none',
+              background: saving ? '#8CC7C4' : ratedCount === 0 ? undefined : '#DB1A1A',
+              boxShadow: ratedCount > 0 && !saving ? '0 12px 32px -8px rgba(219,26,26,0.3)' : undefined,
             }}
           >
             {saving ? '✓ Saved!' : `Save Ratings (${ratedCount} rated)`}
@@ -196,7 +221,13 @@ function RateForm() {
 
 export default function RateAcademicPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#888' }}>Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="animate-pulse-soft text-sm text-slate-500 dark:text-slate-400">Loading...</p>
+        </div>
+      }
+    >
       <RateForm />
     </Suspense>
   )

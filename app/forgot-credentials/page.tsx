@@ -37,60 +37,55 @@ function ForgotForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF6F6] flex flex-col items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md border border-gray-100">
-        <h2 className="text-3xl font-extrabold text-[#2C687B] mb-1">Forgot Credentials?</h2>
-        <p className="text-[#8CC7C4] text-sm mb-7">
-          Enter your registered email and we&apos;ll send your ID and password
+    <div className="flex min-h-screen flex-col items-center justify-center p-5 sm:p-6">
+      <div className="surface w-full max-w-md rounded-3xl p-6 fade-in sm:p-8">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">Forgot credentials?</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          Enter your registered email and we&apos;ll send your ID and password.
         </p>
 
         {status === 'success' ? (
-          <div className="text-center py-6">
-            <div className="text-6xl mb-5">✉️</div>
-            <p className="text-[#2C687B] font-semibold text-lg mb-2">Email Sent!</p>
-            <p className="text-[#8CC7C4] text-sm mb-8">{message}</p>
+          <div className="py-8 text-center">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50 text-3xl dark:bg-teal-950/50">✉️</div>
+            <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">Email sent</p>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{message}</p>
             <Link
               href={`/login?role=${role}`}
-              className="inline-block bg-[#2C687B] text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90"
+              className="mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2C687B] py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 transition-opacity hover:opacity-95"
             >
               Back to Login
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
             <div>
-              <label className="text-[#2C687B] font-semibold text-sm mb-2 block">
-                Registered Email Address
-              </label>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Registered email</label>
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="yourname@email.com"
                 required
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#8CC7C4] text-[#2C687B] font-medium transition-colors"
+                className="input-field"
               />
             </div>
 
             {status === 'error' && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-[#DB1A1A] text-sm font-medium">❌ {message}</p>
+              <div className="rounded-xl border border-rose-200/80 bg-rose-50/90 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/40">
+                <p className="text-sm font-medium text-[#DB1A1A]">{message}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="py-4 rounded-xl bg-[#2C687B] text-white font-bold text-base hover:opacity-90 active:opacity-80 disabled:opacity-50 transition-opacity"
+              className="min-h-12 rounded-xl bg-[#2C687B] py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-900/20 transition-opacity hover:opacity-95 disabled:opacity-50"
             >
-              {status === 'loading' ? 'Sending...' : 'Send My Credentials'}
+              {status === 'loading' ? 'Sending...' : 'Send my credentials'}
             </button>
 
-            <Link
-              href={`/login?role=${role}`}
-              className="text-center text-[#8CC7C4] text-sm hover:text-[#2C687B] transition-colors"
-            >
-              ← Back to Login
+            <Link href={`/login?role=${role}`} className="text-center text-sm font-medium text-[#2C687B] hover:underline dark:text-teal-300">
+              ← Back to login
             </Link>
           </form>
         )}
@@ -101,7 +96,13 @@ function ForgotForm() {
 
 export default function ForgotCredentialsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FFF6F6] flex items-center justify-center"><p className="text-[#2C687B]">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="animate-pulse-soft text-sm text-slate-500 dark:text-slate-400">Loading...</p>
+        </div>
+      }
+    >
       <ForgotForm />
     </Suspense>
   )

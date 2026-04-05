@@ -17,7 +17,10 @@ export default function AcademicPage() {
   useEffect(() => {
     setMounted(true)
     const user = getUser()
-    if (!user || user.role !== 'student') { router.push('/'); return }
+    if (!user || user.role !== 'student') {
+      router.push('/')
+      return
+    }
     loadRated()
     const handleFocus = () => loadRated()
     window.addEventListener('focus', handleFocus)
@@ -36,17 +39,38 @@ export default function AcademicPage() {
     if (!user) return
     const stored = localStorage.getItem('academicRatings')
     const allRatings = stored ? JSON.parse(stored) : []
-    if (allRatings.length === 0) { alert('Please rate at least one item before submitting.'); return }
+    if (allRatings.length === 0) {
+      alert('Please rate at least one item before submitting.')
+      return
+    }
     if (!confirm('Submit all your ratings? You cannot change them after submitting.')) return
     setSubmitting(true)
-    const rows: { student_id: string; student_name: string; teacher_name: string; factor: string; rating: number; comment: string }[] = []
+    const rows: {
+      student_id: string
+      student_name: string
+      teacher_name: string
+      factor: string
+      rating: number
+      comment: string
+    }[] = []
     for (const item of allRatings) {
       for (const f of item.factors) {
-        rows.push({ student_id: user.id, student_name: user.name, teacher_name: item.teacher_name, factor: f.factor, rating: f.rating, comment: f.comment || '' })
+        rows.push({
+          student_id: user.id,
+          student_name: user.name,
+          teacher_name: item.teacher_name,
+          factor: f.factor,
+          rating: f.rating,
+          comment: f.comment || '',
+        })
       }
     }
     const { error } = await supabase.from('academic_feedback').insert(rows)
-    if (error) { alert('Error submitting. Please try again.'); setSubmitting(false); return }
+    if (error) {
+      alert('Error submitting. Please try again.')
+      setSubmitting(false)
+      return
+    }
     localStorage.removeItem('academicRatings')
     setSubmitted(true)
     setSubmitting(false)
@@ -56,14 +80,20 @@ export default function AcademicPage() {
 
   if (submitted) {
     return (
-      <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #eaeaea', padding: '48px', textAlign: 'center', maxWidth: '360px', width: '100%' }}>
-          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f0f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <div className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-6 sm:py-12">
+        <div className="surface w-full max-w-sm rounded-3xl px-6 py-10 text-center sm:px-8 sm:py-12">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-teal-50 dark:bg-teal-950/50">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
-          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>Submitted!</h2>
-          <p style={{ color: '#888', fontSize: '14px', marginBottom: '28px' }}>Thank you for your valuable feedback.</p>
-          <button onClick={() => router.push('/feedback')} style={{ background: '#2C687B', color: 'white', border: 'none', borderRadius: '10px', padding: '12px 28px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">Submitted!</h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Thank you for your valuable feedback.</p>
+          <button
+            type="button"
+            onClick={() => router.push('/feedback')}
+            className="mt-8 min-h-12 w-full rounded-xl bg-[#2C687B] py-3 text-sm font-semibold text-white shadow-lg shadow-teal-900/25 transition-opacity hover:opacity-95"
+          >
             Back to Home
           </button>
         </div>
@@ -74,68 +104,74 @@ export default function AcademicPage() {
   const progress = Math.round((ratedItems.length / ALL_ITEMS.length) * 100)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
-
-      {/* Nav */}
-      <div style={{ background: 'white', borderBottom: '1px solid #eaeaea', padding: '0 24px' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button onClick={() => router.push('/feedback')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <div className="min-h-screen pb-32">
+      <header className="glass-nav sticky top-0 z-10">
+        <div className="mx-auto flex min-h-12 max-w-xl items-center justify-between gap-2 px-4 py-2 sm:px-6">
+          <button
+            type="button"
+            onClick={() => router.push('/feedback')}
+            className="flex min-h-11 min-w-11 items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
             Back
           </button>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e' }}>Academic Feedback</span>
-          <span style={{ fontSize: '13px', color: '#888' }}>{ratedItems.length}/{ALL_ITEMS.length} rated</span>
+          <span className="truncate text-center text-sm font-semibold text-slate-900 dark:text-slate-100">Academic</span>
+          <span className="shrink-0 text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+            {ratedItems.length}/{ALL_ITEMS.length}
+          </span>
         </div>
-        {/* Progress bar */}
-        <div style={{ height: '3px', background: '#f0f0f0' }}>
-          <div style={{ height: '100%', background: '#DB1A1A', width: `${progress}%`, transition: 'width 0.4s ease' }} />
+        <div className="h-1 bg-slate-200/80 dark:bg-slate-700/80">
+          <div className="h-full bg-[#DB1A1A] transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
         </div>
-      </div>
+      </header>
 
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px 120px' }}>
-
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>Rate Teachers</h1>
-          <p style={{ color: '#888', fontSize: '13px' }}>Tap any name to rate. All factors are optional.</p>
+      <div className="mx-auto max-w-xl px-4 py-8 sm:px-6">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 sm:text-2xl">Rate Teachers</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tap any name to rate. All factors are optional.</p>
         </div>
 
-        {/* Teacher list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="flex flex-col gap-3">
           {ALL_ITEMS.map((item, i) => {
             const rated = ratedItems.includes(item)
             const isTimetable = item === 'Timetable Management'
             return (
               <button
                 key={item}
+                type="button"
                 onClick={() => router.push(`/feedback/academic/rate?name=${encodeURIComponent(item)}`)}
-                style={{
-                  background: 'white', border: `1px solid ${rated ? '#8CC7C4' : '#eaeaea'}`,
-                  borderRadius: '12px', padding: '16px 20px',
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`surface-interactive flex min-h-[3.25rem] w-full items-center gap-4 rounded-2xl border px-4 py-4 text-left sm:px-5 ${
+                  rated
+                    ? 'border-[#8CC7C4]/50 bg-white dark:border-teal-700/50 dark:bg-slate-900/80'
+                    : 'border-slate-200/80 bg-white/90 dark:border-slate-600/50 dark:bg-slate-900/70'
+                }`}
               >
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-                  background: rated ? '#f0f9fa' : '#f8f8f8',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: isTimetable ? '18px' : '14px', fontWeight: 700,
-                  color: rated ? '#2C687B' : '#bbb',
-                }}>
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
+                    rated
+                      ? 'bg-teal-50 text-[#2C687B] dark:bg-teal-950/50 dark:text-teal-300'
+                      : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                  } ${isTimetable ? 'text-lg' : ''}`}
+                >
                   {isTimetable ? '📅' : i + 1}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a2e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item}</div>
-                  {!isTimetable && <div style={{ fontSize: '12px', color: '#aaa', marginTop: '2px' }}>8 rating factors</div>}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{item}</div>
+                  {!isTimetable ? <div className="text-xs text-slate-400 dark:text-slate-500">8 rating factors</div> : null}
                 </div>
                 {rated ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f0f9fa', padding: '5px 12px', borderRadius: '100px', flexShrink: 0 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C687B' }}>Rated</span>
+                  <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1.5 dark:bg-teal-950/50">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span className="text-xs font-semibold text-[#2C687B] dark:text-teal-300">Rated</span>
                   </div>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <svg className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
                 )}
               </button>
             )
@@ -143,19 +179,16 @@ export default function AcademicPage() {
         </div>
       </div>
 
-      {/* Sticky footer */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(250,250,250,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #eaeaea', padding: '16px 24px' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+      <div className="sticky-footer-bar fixed bottom-0 left-0 right-0 z-10 px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-xl">
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={submitting || ratedItems.length === 0}
+            className="min-h-12 w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
             style={{
-              width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
-              background: ratedItems.length === 0 ? '#f0f0f0' : '#DB1A1A',
-              color: ratedItems.length === 0 ? '#bbb' : 'white',
-              fontWeight: 700, fontSize: '15px', cursor: ratedItems.length === 0 ? 'not-allowed' : 'pointer',
-              fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
-              boxShadow: ratedItems.length > 0 ? '0 4px 20px rgba(219,26,26,0.25)' : 'none',
+              background: ratedItems.length === 0 ? undefined : '#DB1A1A',
+              boxShadow: ratedItems.length > 0 ? '0 12px 32px -8px rgba(219,26,26,0.35)' : undefined,
             }}
           >
             {submitting ? 'Submitting...' : `Submit Feedback${ratedItems.length > 0 ? ` (${ratedItems.length} rated)` : ''}`}
