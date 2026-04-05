@@ -6,9 +6,9 @@ import { setUser } from '@/lib/auth'
 import Link from 'next/link'
 
 const roleConfig = {
-  student: { color: '#DB1A1A', label: 'Student', gradient: 'from-[#0f3d4d] via-[#1a5568] to-[#2C687B]' },
-  teacher: { color: '#2C687B', label: 'Teacher', gradient: 'from-[#0c3544] via-[#164a5c] to-[#1a4a5a]' },
-  admin: { color: '#334155', label: 'Admin', gradient: 'from-[#0f172a] via-[#1e293b] to-[#334155]' },
+  student: { color: '#DB1A1A', label: 'Student', bg: '#2C687B' },
+  teacher: { color: '#2C687B', label: 'Teacher', bg: '#1a4a5a' },
+  admin: { color: '#333', label: 'Admin', bg: '#222' },
 }
 
 function LoginForm() {
@@ -29,8 +29,7 @@ function LoginForm() {
     setError('')
 
     const { data, error: dbError } = await supabase
-      .from('users')
-      .select('*')
+      .from('users').select('*')
       .eq('display_id', displayId.trim())
       .eq('password', password)
       .eq('role', role)
@@ -48,88 +47,100 @@ function LoginForm() {
     else router.push('/feedback')
   }
 
-  const quote =
-    role === 'student'
-      ? 'Your honest feedback makes our institution better for everyone.'
-      : role === 'teacher'
-        ? 'Growth starts with understanding how your students experience your teaching.'
-        : 'Data-driven decisions begin with honest student feedback.'
-
   return (
-    <div className="fade-in flex min-h-screen flex-col bg-white lg:flex-row dark:bg-slate-950">
-      <div
-        className={`relative hidden w-full flex-col justify-between overflow-hidden px-10 py-10 md:flex md:w-[42%] md:min-h-screen md:shrink-0 md:px-10 md:py-12 bg-gradient-to-br ${config.gradient} text-white`}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-            backgroundSize: '28px 28px',
-          }}
-        />
-        <div className="relative flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#DB1A1A] shadow-md shadow-black/15">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'white' }}>
+
+      {/* Left photo panel */}
+      <div style={{
+        width: '42%',
+        background: config.bg,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '40px',
+        position: 'relative',
+        overflow: 'hidden',
+      }} className="hidden md:flex md:flex-col">
+        {/* Dot pattern */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.06,
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '28px 28px',
+        }} />
+
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <span className="text-sm font-semibold text-white/95">Feedback Portal</span>
+          <span style={{ color: 'white', fontWeight: 600, fontSize: '14px' }}>Feedback Portal</span>
         </div>
 
-        <div className="relative">
-          <div className="mb-4 font-serif text-5xl leading-none text-white/15">&ldquo;</div>
-          <p className="font-display text-xl font-semibold leading-snug text-white sm:text-[1.35rem]">{quote}</p>
-          <div className="mt-6 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold text-white backdrop-blur-sm">
-              {role === 'student' ? 'S' : role === 'teacher' ? 'T' : 'A'}
+        {/* Quote */}
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontSize: '48px', color: 'rgba(255,255,255,0.15)', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: '16px' }}>&ldquo;</div>
+          <p style={{ color: 'white', fontSize: '20px', fontWeight: 600, lineHeight: 1.5, marginBottom: '20px', fontFamily: 'Playfair Display, serif' }}>
+            {role === 'student' && 'Your honest feedback makes our institution better for everyone.'}
+            {role === 'teacher' && 'Growth starts with understanding how your students experience your teaching.'}
+            {role === 'admin' && 'Data-driven decisions begin with honest student feedback.'}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'white', fontSize: '14px', fontWeight: 700 }}>
+                {role === 'student' ? 'S' : role === 'teacher' ? 'T' : 'A'}
+              </span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">{config.label} Login</div>
-              <div className="text-xs text-white/50">Secure &amp; Anonymous</div>
+              <div style={{ color: 'white', fontSize: '13px', fontWeight: 600 }}>{config.label} Login</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Secure & Anonymous</div>
             </div>
           </div>
         </div>
 
-        <div className="relative flex gap-2">
-          {(['student', 'teacher', 'admin'] as const).map((r) => (
-            <div
-              key={r}
-              className={`h-1 flex-1 rounded-full ${r === role ? 'bg-white' : 'bg-white/20'}`}
-            />
+        {/* Bottom bar */}
+        <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+          {['student', 'teacher', 'admin'].map(r => (
+            <div key={r} style={{
+              height: '3px', flex: 1, borderRadius: '2px',
+              background: r === role ? 'white' : 'rgba(255,255,255,0.2)',
+            }} />
           ))}
         </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-10 sm:py-12">
-        <div className="w-full max-w-[380px]">
-          <Link
-            href="/"
-            className="mb-8 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
+      {/* Right form */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: '#fafafa' }}>
+        <div style={{ width: '100%', maxWidth: '380px' }}>
+
+          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#888', fontSize: '13px', textDecoration: 'none', marginBottom: '36px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Back to roles
           </Link>
 
-          <div className="mb-8">
-            <span
-              className="mb-3 inline-block rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm"
-              style={{ backgroundColor: config.color }}
-            >
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{
+              display: 'inline-block', background: config.color,
+              color: 'white', fontSize: '11px', fontWeight: 600,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              padding: '5px 12px', borderRadius: '100px', marginBottom: '16px',
+            }}>
               {config.label}
-            </span>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Welcome back</h2>
-            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Enter your assigned credentials below</p>
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a2e', marginBottom: '6px' }}>Welcome back</h2>
+            <p style={{ color: '#888', fontSize: '14px' }}>Enter your assigned credentials below</p>
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Your ID</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#444', marginBottom: '8px' }}>
+                Your ID
+              </label>
               <input
                 type="text"
                 value={displayId}
-                onChange={(e) => setDisplayId(e.target.value)}
+                onChange={e => setDisplayId(e.target.value)}
                 placeholder="e.g. STU001"
                 required
                 className="input-field"
@@ -137,20 +148,23 @@ function LoginForm() {
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Password</label>
-              <div className="relative">
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#444', marginBottom: '8px' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="Your password"
                   required
-                  className="input-field pr-16"
+                  className="input-field"
+                  style={{ paddingRight: '60px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-2 top-1/2 flex min-h-11 -translate-y-1/2 items-center px-2 text-xs font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#aaa', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                 >
                   {showPass ? 'Hide' : 'Show'}
                 </button>
@@ -158,34 +172,35 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="flex items-center gap-3 rounded-xl border border-rose-200/80 bg-rose-50/90 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/40">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" aria-hidden>
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
+              <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <span className="text-sm font-medium text-[#DB1A1A]">{error}</span>
+                <span style={{ fontSize: '13px', color: '#DB1A1A', fontWeight: 500 }}>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 min-h-12 w-full rounded-xl py-3.5 text-sm font-semibold text-white shadow-lg transition-[transform,opacity,box-shadow] hover:opacity-[0.97] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
               style={{
-                backgroundColor: loading ? '#94a3b8' : config.color,
-                boxShadow: loading ? undefined : `0 12px 32px -8px ${config.color}55`,
+                width: '100%', padding: '14px', borderRadius: '10px',
+                background: loading ? '#ccc' : config.color,
+                color: 'white', fontWeight: 600, fontSize: '14px',
+                border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: 'Inter, sans-serif', marginTop: '4px',
+                transition: 'opacity 0.15s',
               }}
             >
               {loading ? 'Signing in...' : `Sign in as ${config.label}`}
             </button>
           </form>
 
-          <div className="mt-8 flex flex-col items-center gap-3 border-t border-slate-200/80 pt-8 dark:border-slate-700/80">
-            <Link href={`/forgot-credentials?role=${role}`} className="text-sm font-semibold text-[#2C687B] hover:underline dark:text-teal-300">
+          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #eee', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <Link href={`/forgot-credentials?role=${role}`} style={{ fontSize: '13px', color: '#2C687B', textDecoration: 'none', fontWeight: 500 }}>
               Forgot your credentials?
             </Link>
-            <Link href="/change-password" className="text-sm text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+            <Link href="/change-password" style={{ fontSize: '13px', color: '#aaa', textDecoration: 'none' }}>
               Change password
             </Link>
           </div>
@@ -197,13 +212,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
-          <p className="animate-pulse-soft text-sm text-slate-500 dark:text-slate-400">Loading...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#888' }}>Loading...</p></div>}>
       <LoginForm />
     </Suspense>
   )
