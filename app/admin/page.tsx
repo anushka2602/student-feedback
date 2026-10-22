@@ -1,193 +1,159 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { getUser, clearUser } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
+import { useState } from 'react'
+import { Icon } from '@/components/Icon'
+import { ScoreBar, ScoreNumber } from '@/components/Score'
+import { TopBar } from '@/components/TopBar'
+import { Button, Card, EmptyState, Skeleton } from '@/components/ui'
+import { useApi } from '@/lib/api'
+import { ANONYMOUS_MODE } from '@/lib/config'
+import { ALL_FACTORS, NON_ACADEMIC_CATEGORIES, TEACHERS, TIMETABLE } from '@/lib/constants'
+import { fillVar, fmt1, plural } from '@/lib/rating'
 
-type AcademicRow    = { id: string; student_name: string; teacher_name: string; factor: string; rating: number; comment: string; submitted_at: string }
-type NonAcademicRow = { id: string; student_name: string; category: string; rating: number; comment: string; submitted_at: string }
+interface Summary {
+  students: number; academicResponses: number; nonAcademicResponses: number; academicAverage: number | null; nonAcademicAverage: number | null
+  teachers: { name: string; average: number; responses: number; respondents: number }[]
+  categories: { name: string; average: number; responses: number }[]
+}
+interface Row { id: string; student_name?: string; teacher_name?: string; factor?: string; category?: string; rating: number; comment: string; submitted_at: string }
+interface Page { rows: Row[]; total: number; page: number; pageSize: number }
+type Tab = 'overview' | 'academic' | 'non-academic'
 
-const ratingColor = (r: number) => r >= 8 ? 'var(--teal)' : r >= 5 ? '#f97316' : '#DB1A1A'
-const ratingBg    = (r: number) => r >= 8 ? 'var(--teal-bg)' : r >= 5 ? 'rgba(249,115,22,0.1)' : 'var(--red-bg)'
+const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
-export default function AdminDashboard() {
-  const router = useRouter()
-  const [academic, setAcademic]       = useState<AcademicRow[]>([])
-  const [nonAcademic, setNonAcademic] = useState<NonAcademicRow[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [tab, setTab]                 = useState<'academic' | 'non-academic'>('academic')
-  const [filterTeacher, setFilter]    = useState('')
-  const [mounted, setMounted]         = useState(false)
+function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return <Card className="p-4"><p className="text-[13px] text-ink-3">{label}</p><p className="mt-1 font-display text-3xl font-bold tabular-nums">{value}</p>{sub && <p className="text-[13px] text-ink-3">{sub}</p>}</Card>
+}
 
-  useEffect(() => {
-    setMounted(true)
-    const user = getUser()
-    if (!user || user.role !== 'admin') { router.push('/'); return }
-    fetchAll()
-  }, [router])
-
-  const fetchAll = async () => {
-    const [a, na] = await Promise.all([
-      supabase.from('academic_feedback').select('*').order('submitted_at', { ascending: false }),
-      supabase.from('non_academic_feedback').select('*').order('submitted_at', { ascending: false }),
-    ])
-    if (a.data) setAcademic(a.data)
-    if (na.data) setNonAcademic(na.data)
-    setLoading(false)
-  }
-
-  const uniqueTeachers   = [...new Set(academic.map(r => r.teacher_name))]
-  const filteredAcademic = filterTeacher ? academic.filter(r => r.teacher_name === filterTeacher) : academic
-
-  const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-
-  if (!mounted || loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--text3)', fontSize: '14px' }}>Loading feedback data...</p>
-      </div>
-    )
-  }
-
+function Overview({ go }: { go: (tab: Tab, teacher?: string, category?: string) => void }) {
+  const { data, error, loading, reload } = useApi<Summary>('/api/admin/summary')
+  if (error) return <EmptyState icon="alert" title="Could not load the overview" action={<Button onClick={reload}>Try again</Button>}>{error}</EmptyState>
+  if (loading || !data) return <div className="grid gap-3 sm:grid-cols-4" aria-busy="true">{[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-24" />)}<Skeleton className="h-64 sm:col-span-4" /></div>
+  const rowBtn = 'grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 rounded-lg px-3 py-3 text-left hover:bg-surface-2 sm:grid-cols-[minmax(0,14rem)_1fr_auto]'
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-
-      {/* Nav */}
-      <div className="top-nav">
-        <div className="top-nav-inner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Admin Panel</span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-            <Link href="/change-password" className="btn-ghost" style={{ color: 'var(--teal)', borderColor: 'var(--teal-border)', background: 'var(--teal-bg)' }}>Pass</Link>
-            <button onClick={() => { clearUser(); router.push('/') }} className="btn-ghost">Out</button>
-          </div>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Students who responded" value={data.students} />
+        <Stat label="Teacher ratings" value={data.academicResponses} sub={`Average ${fmt1(data.academicAverage)}`} />
+        <Stat label="Campus ratings" value={data.nonAcademicResponses} sub={`Average ${fmt1(data.nonAcademicAverage)}`} />
+        <Stat label="Teachers rated" value={`${data.teachers.filter(t => t.name !== TIMETABLE).length}/${TEACHERS.length}`} />
       </div>
-
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>All Feedback</h1>
-          <p style={{ color: 'var(--text3)', fontSize: '13px' }}>Complete overview of all student submissions</p>
-        </div>
-
-        {/* Stats — 2 col on mobile, 3 on desktop */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }} className="sm:grid-cols-3">
-          {[
-            { label: 'Academic',     value: academic.length,    color: '#DB1A1A' },
-            { label: 'Non-Academic', value: nonAcademic.length, color: 'var(--teal)' },
-          ].map(s => (
-            <div key={s.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px' }}>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '4px' }}>{s.label} responses</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-          {(['academic', 'non-academic'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                flex: 1, padding: '10px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'Inter,sans-serif', border: 'none', transition: 'all 0.15s',
-                background: tab === t ? 'var(--text)' : 'var(--bg2)',
-                color:      tab === t ? 'var(--bg)'   : 'var(--text3)',
-                boxShadow:  tab === t ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
-              }}
-            >
-              {t === 'academic' ? `Academic (${academic.length})` : `Non-Academic (${nonAcademic.length})`}
+      <section>
+        <h2 className="mb-2 font-display text-lg font-semibold">Teachers and timetable</h2>
+        <Card className="p-1.5">
+          {data.teachers.length === 0 ? <p className="p-6 text-center text-sm text-ink-3">No ratings yet.</p> : data.teachers.map(t => (
+            <button key={t.name} className={rowBtn} onClick={() => go('academic', t.name)}>
+              <span className="min-w-0"><span className="block truncate font-medium">{t.name}</span><span className="text-[13px] text-ink-3">{plural(t.respondents, 'student')}, {plural(t.responses, 'rating')}</span></span>
+              <span className="sm:order-last"><ScoreNumber value={t.average} /></span>
+              <ScoreBar value={t.average} className="col-span-2 sm:col-span-1" />
             </button>
           ))}
-        </div>
-
-        {/* Filter */}
-        {tab === 'academic' && (
-          <div style={{ marginBottom: '14px' }}>
-            <select
-              value={filterTeacher}
-              onChange={e => setFilter(e.target.value)}
-              style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid var(--border)', fontSize: '13px', color: 'var(--text)', fontFamily: 'Inter,sans-serif', background: 'var(--bg2)', outline: 'none', cursor: 'pointer', maxWidth: '100%', width: '100%' }}
-            >
-              <option value="">All Teachers</option>
-              {uniqueTeachers.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-        )}
-
-        {/* Academic rows */}
-        {tab === 'academic' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {filteredAcademic.length === 0 ? (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
-                <p style={{ color: 'var(--text3)', fontSize: '14px' }}>No academic feedback yet.</p>
-              </div>
-            ) : filteredAcademic.map(row => (
-              <div key={row.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px 16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>{row.teacher_name}</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text3)', background: 'var(--bg3)', padding: '2px 8px', borderRadius: '100px', whiteSpace: 'nowrap' }}>{row.factor}</span>
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text3)' }}>
-                      {row.student_name} · {fmtDate(row.submitted_at)}
-                    </div>
-                  </div>
-                  <div style={{ flexShrink: 0, width: '44px', height: '44px', borderRadius: '10px', background: ratingBg(row.rating), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1, color: ratingColor(row.rating) }}>{row.rating}</span>
-                    <span style={{ fontSize: '10px', color: ratingColor(row.rating) }}>/10</span>
-                  </div>
-                </div>
-                {row.comment && (
-                  <div style={{ marginTop: '10px', background: 'var(--bg3)', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: 'var(--text2)', borderLeft: '3px solid var(--teal-light)' }}>
-                    {row.comment}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Non-academic rows */}
-        {tab === 'non-academic' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {nonAcademic.length === 0 ? (
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
-                <p style={{ color: 'var(--text3)', fontSize: '14px' }}>No non-academic feedback yet.</p>
-              </div>
-            ) : nonAcademic.map(row => (
-              <div key={row.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px 16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{row.category}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text3)' }}>{row.student_name} · {fmtDate(row.submitted_at)}</div>
-                  </div>
-                  <div style={{ flexShrink: 0, width: '44px', height: '44px', borderRadius: '10px', background: ratingBg(row.rating), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1, color: ratingColor(row.rating) }}>{row.rating}</span>
-                    <span style={{ fontSize: '10px', color: ratingColor(row.rating) }}>/10</span>
-                  </div>
-                </div>
-                {row.comment && (
-                  <div style={{ marginTop: '10px', background: 'var(--bg3)', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: 'var(--text2)', borderLeft: '3px solid var(--teal-light)' }}>
-                    {row.comment}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </Card>
+      </section>
+      <section>
+        <h2 className="mb-2 font-display text-lg font-semibold">Campus life</h2>
+        <Card className="p-1.5">
+          {data.categories.length === 0 ? <p className="p-6 text-center text-sm text-ink-3">No ratings yet.</p> : data.categories.map(c => (
+            <button key={c.name} className={rowBtn} onClick={() => go('non-academic', undefined, c.name)}>
+              <span className="min-w-0"><span className="block truncate font-medium">{c.name}</span><span className="text-[13px] text-ink-3">{plural(c.responses, 'rating')}</span></span>
+              <span className="sm:order-last"><ScoreNumber value={c.average} /></span>
+              <ScoreBar value={c.average} className="col-span-2 sm:col-span-1" />
+            </button>
+          ))}
+        </Card>
+      </section>
     </div>
+  )
+}
+
+function Responses({ type, teacher, category, setTeacher, setCategory }: {
+  type: 'academic' | 'non-academic'; teacher: string; category: string; setTeacher: (v: string) => void; setCategory: (v: string) => void
+}) {
+  const [factor, setFactor] = useState('')
+  const [q, setQ] = useState('')
+  const [sort, setSort] = useState('new')
+  const [withComments, setWithComments] = useState(false)
+  const [page, setPage] = useState(1)
+  const academic = type === 'academic'
+  const qs = new URLSearchParams({ type, page: String(page), sort })
+  if (academic && teacher) qs.set('teacher', teacher)
+  if (academic && factor) qs.set('factor', factor)
+  if (!academic && category) qs.set('category', category)
+  if (q.trim()) qs.set('q', q.trim())
+  if (withComments) qs.set('withComments', '1')
+  const { data, error, loading, reload } = useApi<Page>(`/api/admin/feedback?${qs}`)
+  const reset = <T,>(set: (v: T) => void) => (v: T) => { set(v); setPage(1) }
+  const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1
+  const sel = 'input min-h-10 py-2 text-sm'
+
+  return (
+    <div>
+      <div className="mb-4 grid gap-2 sm:grid-cols-[repeat(4,1fr)_auto]">
+        {academic ? (
+          <>
+            <select aria-label="Teacher" className={sel} value={teacher} onChange={e => reset(setTeacher)(e.target.value)}><option value="">All teachers</option>{[...TEACHERS, TIMETABLE].map(t => <option key={t}>{t}</option>)}</select>
+            <select aria-label="Factor" className={sel} value={factor} onChange={e => reset(setFactor)(e.target.value)}><option value="">All factors</option>{ALL_FACTORS.map(t => <option key={t}>{t}</option>)}</select>
+          </>
+        ) : (
+          <select aria-label="Category" className={`${sel} sm:col-span-2`} value={category} onChange={e => reset(setCategory)(e.target.value)}><option value="">All categories</option>{NON_ACADEMIC_CATEGORIES.map(t => <option key={t}>{t}</option>)}</select>
+        )}
+        <select aria-label="Sort" className={sel} value={sort} onChange={e => reset(setSort)(e.target.value)}><option value="new">Newest first</option><option value="high">Highest rated</option><option value="low">Lowest rated</option></select>
+        <div className="relative"><Icon name="search" size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" /><input aria-label="Search comments" className={`${sel} pl-9`} placeholder="Search comments" value={q} onChange={e => reset(setQ)(e.target.value)} /></div>
+        <a href={`/api/admin/export?type=${type}`} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control border border-line-strong bg-surface px-3.5 text-sm font-semibold hover:bg-surface-2"><Icon name="download" size={16} />Export CSV</a>
+      </div>
+      <label className="mb-4 flex items-center gap-2 text-sm text-ink-2"><input type="checkbox" className="size-4 accent-[var(--brand)]" checked={withComments} onChange={e => reset(setWithComments)(e.target.checked)} />Only show ratings with comments</label>
+
+      {error ? <EmptyState icon="alert" title="Could not load feedback" action={<Button onClick={reload}>Try again</Button>}>{error}</EmptyState>
+      : !data ? <div className="space-y-2" aria-busy="true">{[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+      : data.rows.length === 0 ? <EmptyState icon="search" title="Nothing matches">Try clearing a filter or the search.</EmptyState>
+      : (
+        <>
+          <ul className={`flex flex-col gap-2 transition-opacity ${loading ? 'opacity-50' : ''}`} aria-busy={loading}>
+            {data.rows.map(r => (
+              <li key={r.id}><Card className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{r.teacher_name ?? r.category}</p>
+                    <p className="text-[13px] text-ink-3">{[r.factor, !ANONYMOUS_MODE && r.student_name, fmtDate(r.submitted_at)].filter(Boolean).join(' · ')}</p>
+                  </div>
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl font-display text-lg font-bold text-white" style={{ background: fillVar(r.rating) }}>{r.rating}</span>
+                </div>
+                {r.comment && <p className="mt-3 break-words rounded-lg bg-surface-2 px-3.5 py-2.5 text-[14px] leading-relaxed text-ink-2">{r.comment}</p>}
+              </Card></li>
+            ))}
+          </ul>
+          <div className="mt-4 flex items-center justify-between text-sm text-ink-3">
+            <span>{(page - 1) * data.pageSize + 1}–{(page - 1) * data.pageSize + data.rows.length} of {data.total}</span>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><Icon name="chevron-left" size={15} />Previous</Button>
+              <Button variant="secondary" size="sm" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Next<Icon name="chevron-right" size={15} /></Button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function AdminDashboard() {
+  const [tab, setTab] = useState<Tab>('overview')
+  const [teacher, setTeacher] = useState('')
+  const [category, setCategory] = useState('')
+  const tabs: [Tab, string][] = [['overview', 'Overview'], ['academic', 'Teacher ratings'], ['non-academic', 'Campus ratings']]
+
+  return (
+    <>
+      <TopBar wide title="Admin" />
+      <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-6">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Feedback</h1>
+        <div role="tablist" aria-label="Sections" className="mb-6 mt-4 inline-flex w-full rounded-control bg-surface-2 p-1 sm:w-auto">
+          {tabs.map(([k, label]) => (
+            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+              className={`flex-1 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors sm:flex-none ${tab === k ? 'bg-surface text-ink shadow-sm' : 'text-ink-3 hover:text-ink'}`}>{label}</button>
+          ))}
+        </div>
+        {tab === 'overview' && <Overview go={(t, te, ca) => { setTab(t); setTeacher(te ?? ''); setCategory(ca ?? '') }} />}
+        {tab !== 'overview' && <Responses key={tab} type={tab} teacher={teacher} category={category} setTeacher={setTeacher} setCategory={setCategory} />}
+      </main>
+    </>
   )
 }

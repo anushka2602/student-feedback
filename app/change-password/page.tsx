@@ -1,114 +1,63 @@
 'use client'
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser, setUser } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { FormEvent, useState } from 'react'
+import { Icon } from '@/components/Icon'
+import { useRequireSession } from '@/components/SessionProvider'
+import { useToast } from '@/components/Toast'
+import { TopBar } from '@/components/TopBar'
+import { Button, Card, ErrorNote, Field, Skeleton } from '@/components/ui'
+import { api } from '@/lib/api'
+import { homeFor } from '@/lib/types'
 
 export default function ChangePasswordPage() {
+  const user = useRequireSession()
   const router = useRouter()
-  const [oldPass, setOldPass] = useState('')
-  const [newPass, setNewPass] = useState('')
+  const toast = useToast()
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [show, setShow] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  const getBackPath = () => {
-    const user = getUser()
-    if (!user) return '/'
-    if (user.role === 'teacher') return '/teacher'
-    if (user.role === 'admin') return '/admin'
-    return '/feedback'
-  }
+  if (!user) return <main className="mx-auto max-w-md p-6"><Skeleton className="h-72" /></main>
+  const home = homeFor(user.role)
+  const tooShort = next.length > 0 && next.length < 8
+  const mismatch = confirm.length > 0 && confirm !== next
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    setError('')
-    const user = getUser()
-    if (!user) { router.push('/'); return }
-
-    if (newPass !== confirm) { setError('New passwords do not match.'); return }
-    if (newPass.length < 4) { setError('Password must be at least 4 characters.'); return }
-
-    setLoading(true)
-
-    // Verify old password
-    const { data: check } = await supabase
-      .from('users').select('id').eq('id', user.id).eq('password', oldPass).single()
-
-    if (!check) { setError('Current password is incorrect.'); setLoading(false); return }
-
-    const { error: updateError } = await supabase
-      .from('users').update({ password: newPass }).eq('id', user.id)
-
-    if (updateError) { setError('Update failed. Please try again.'); setLoading(false); return }
-
-    // Update local storage
-    setUser({ ...user, password: newPass })
-    setSuccess(true)
-    setLoading(false)
+    if (next !== confirm) { setError('The new passwords do not match.'); return }
+    setBusy(true); setError('')
+    try {
+      await api('/api/auth/change-password', { current, next })
+      toast('Password updated')
+      router.replace(home)
+    } catch (err) { setError((err as Error).message); setBusy(false) }
   }
 
+  const type = show ? 'text' : 'password'
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-5 sm:p-6">
-      <div className="surface w-full max-w-md rounded-3xl p-6 fade-in sm:p-8">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Change password</h2>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Update your account password securely.</p>
-
-        {success ? (
-          <div className="py-8 text-center">
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-3xl dark:bg-teal-950/50">✅</div>
-            <p className="font-semibold text-slate-900 dark:text-slate-100">Password updated successfully</p>
-            <button
-              type="button"
-              onClick={() => router.push(getBackPath())}
-              className="mt-8 min-h-12 w-full rounded-xl bg-[#2C687B] py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 transition-opacity hover:opacity-95"
-            >
-              Go back
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
-            {[
-              { label: 'Current password', val: oldPass, set: setOldPass },
-              { label: 'New password', val: newPass, set: setNewPass },
-              { label: 'Confirm new password', val: confirm, set: setConfirm },
-            ].map((field) => (
-              <div key={field.label}>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{field.label}</label>
-                <input
-                  type="password"
-                  value={field.val}
-                  onChange={(e) => field.set(e.target.value)}
-                  required
-                  className="input-field"
-                />
-              </div>
-            ))}
-
-            {error ? (
-              <div className="rounded-xl border border-rose-200/80 bg-rose-50/90 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/40">
-                <p className="text-sm font-medium text-[#DB1A1A]">{error}</p>
-              </div>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 min-h-12 rounded-xl bg-[#DB1A1A] py-3.5 text-sm font-bold text-white shadow-lg shadow-rose-900/25 transition-opacity hover:opacity-95 disabled:opacity-50"
-            >
-              {loading ? 'Updating...' : 'Update password'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(getBackPath())}
-              className="text-center text-sm font-medium text-[#2C687B] hover:underline dark:text-teal-300"
-            >
-              ← Back
-            </button>
+    <>
+      <TopBar back={{ href: home, label: 'Back' }} />
+      <main className="mx-auto w-full max-w-md px-4 py-8">
+        <Card className="p-6 shadow-card sm:p-8">
+          <h1 className="font-display text-2xl font-semibold">Change password</h1>
+          <p className="mt-1 text-[15px] text-ink-2">Use at least 8 characters.</p>
+          <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+            <Field label="Current password" htmlFor="cur"><input id="cur" className="input" type={type} value={current} onChange={e => setCurrent(e.target.value)} autoComplete="current-password" required /></Field>
+            <Field label="New password" htmlFor="new" error={tooShort ? 'Needs at least 8 characters.' : undefined}>
+              <input id="new" className="input" type={type} value={next} onChange={e => setNext(e.target.value)} autoComplete="new-password" aria-invalid={tooShort} required />
+            </Field>
+            <Field label="Confirm new password" htmlFor="conf" error={mismatch ? 'Does not match the new password.' : undefined}>
+              <input id="conf" className="input" type={type} value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" aria-invalid={mismatch} required />
+            </Field>
+            <label className="flex items-center gap-2 text-sm text-ink-2"><input type="checkbox" checked={show} onChange={e => setShow(e.target.checked)} className="size-4 accent-[var(--brand)]" /><Icon name={show ? 'eye' : 'eye-off'} size={15} />Show passwords</label>
+            <ErrorNote>{error}</ErrorNote>
+            <Button type="submit" size="lg" full loading={busy} disabled={tooShort || mismatch}>Save new password</Button>
           </form>
-        )}
-      </div>
-    </div>
+        </Card>
+      </main>
+    </>
   )
 }

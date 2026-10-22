@@ -1,178 +1,95 @@
 'use client'
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { setUser } from '@/lib/auth'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { FormEvent, Suspense, useEffect, useState } from 'react'
+import { Icon, LogoMark } from '@/components/Icon'
+import { useSession } from '@/components/SessionProvider'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { Button, ErrorNote, Field } from '@/components/ui'
+import { homeFor, isRole, Role } from '@/lib/types'
 
-const roleConfig = {
-  student: { color: '#DB1A1A', label: 'Student', panelBg: '#2C687B' },
-  teacher: { color: '#2C687B', label: 'Teacher', panelBg: '#1a4a5a' },
-  admin:   { color: '#444',    label: 'Admin',   panelBg: '#1a1a22' },
+const LABEL: Record<Role, string> = { student: 'Student', teacher: 'Teacher', admin: 'Admin' }
+const QUOTE: Record<Role, string> = {
+  student: 'Your honest feedback makes our institution better for everyone.',
+  teacher: 'Growth starts with understanding how students experience your teaching.',
+  admin: 'Good decisions start with honest feedback from students.',
 }
 
 function LoginForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const role = (searchParams.get('role') || 'student') as 'student' | 'teacher' | 'admin'
-  const config = roleConfig[role]
+  const params = useSearchParams()
+  const role: Role = isRole(params.get('role')) ? (params.get('role') as Role) : 'student'
+  const { user, signIn } = useSession()
 
-  const [displayId, setDisplayId]   = useState('')
-  const [password, setPassword]     = useState('')
-  const [error, setError]           = useState('')
-  const [loading, setLoading]       = useState(false)
-  const [showPass, setShowPass]     = useState(false)
+  const [id, setId] = useState('')
+  const [password, setPassword] = useState('')
+  const [show, setShow] = useState(false)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => { if (user) router.replace(homeFor(user.role)) }, [user, router])
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    setLoading(true); setError('')
-    const { data, error: dbError } = await supabase
-      .from('users').select('*')
-      .eq('display_id', displayId.trim())
-      .eq('password', password)
-      .eq('role', role)
-      .single()
-    if (dbError || !data) {
-      setError('Incorrect ID or password. Please try again.')
-      setLoading(false); return
+    setBusy(true); setError('')
+    try {
+      const u = await signIn(role, id.trim(), password)
+      router.replace(homeFor(u.role))
+    } catch (err) {
+      setError((err as Error).message)
+      setBusy(false)
     }
-    setUser(data)
-    if (role === 'teacher') router.push('/teacher')
-    else if (role === 'admin') router.push('/admin')
-    else router.push('/feedback')
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg)' }}>
+    <main className="min-h-dvh lg:grid lg:grid-cols-[5fr_6fr]">
+      <section className="hidden flex-col justify-between bg-[#2c687b] p-12 text-white lg:flex">
+        <Link href="/" className="flex items-center gap-2.5"><LogoMark size={36} /><span className="font-display text-lg font-semibold">Student Feedback</span></Link>
+        <p className="max-w-md font-display text-3xl font-semibold leading-snug tracking-tight">{QUOTE[role]}</p>
+        <p className="text-sm text-white/85">Signing in as {LABEL[role].toLowerCase()}</p>
+      </section>
 
-      {/* Left panel — hidden on mobile */}
-      <div
-        className="hidden md:flex md:flex-col md:justify-between"
-        style={{
-          width: '42%', background: config.panelBg,
-          padding: '40px', position: 'relative', overflow: 'hidden',
-        }}
-      >
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.07, backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+      <section className="relative flex items-center justify-center px-5 py-12">
+        <ThemeToggle className="absolute right-4 top-4" />
+        <div className="w-full max-w-sm">
+          <Link href="/" className="mb-8 inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink"><Icon name="arrow-left" size={16} />Back</Link>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Welcome back</h1>
 
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <span style={{ color: 'white', fontWeight: 600, fontSize: '14px' }}>Feedback Portal</span>
-        </div>
-
-        {/* Quote */}
-        <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: '52px', color: 'rgba(255,255,255,0.12)', fontFamily: 'Georgia,serif', lineHeight: 1, marginBottom: '12px' }}>&ldquo;</div>
-          <p style={{ color: 'white', fontSize: 'clamp(16px,2vw,20px)', fontWeight: 600, lineHeight: 1.5, marginBottom: '20px', fontFamily: 'Playfair Display,serif' }}>
-            {role === 'student' && 'Your honest feedback makes our institution better for everyone.'}
-            {role === 'teacher' && 'Growth starts with understanding how your students experience your teaching.'}
-            {role === 'admin'   && 'Data-driven decisions begin with honest student feedback.'}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '13px', fontWeight: 700 }}>
-              {config.label[0]}
-            </div>
-            <div>
-              <div style={{ color: 'white', fontSize: '13px', fontWeight: 600 }}>{config.label} Login</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px' }}>Secure & Anonymous</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress dots */}
-        <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-          {(['student','teacher','admin'] as const).map(r => (
-            <div key={r} style={{ height: '3px', flex: 1, borderRadius: '2px', background: r === role ? 'white' : 'rgba(255,255,255,0.2)' }} />
-          ))}
-        </div>
-      </div>
-
-      {/* Right — form */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 20px', background: 'var(--bg)' }}>
-        <div style={{ width: '100%', maxWidth: '380px' }}>
-
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text3)', fontSize: '13px', textDecoration: 'none', marginBottom: '32px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            All roles
-          </Link>
-
-          {/* Role badge */}
-          <div style={{ display: 'inline-block', background: config.color, color: 'white', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: '100px', marginBottom: '16px' }}>
-            {config.label}
+          <div role="tablist" aria-label="Sign in as" className="mt-5 grid grid-cols-3 rounded-control bg-surface-2 p-1">
+            {(Object.keys(LABEL) as Role[]).map(r => (
+              <Link key={r} role="tab" aria-selected={r === role} href={`/login?role=${r}`} replace
+                className={`rounded-lg py-2 text-center text-sm font-semibold transition-colors ${r === role ? 'bg-surface text-ink shadow-sm' : 'text-ink-3 hover:text-ink'}`}>
+                {LABEL[r]}
+              </Link>
+            ))}
           </div>
 
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text)', marginBottom: '6px' }}>Welcome back</h2>
-          <p style={{ color: 'var(--text3)', fontSize: '14px', marginBottom: '28px' }}>Enter your assigned credentials below</p>
-
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label className="label">Your ID</label>
-              <input type="text" value={displayId} onChange={e => setDisplayId(e.target.value)} placeholder="e.g. STU001" required className="input-field" />
-            </div>
-
-            <div>
-              <label className="label">Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Your password"
-                  required
-                  className="input-field"
-                  style={{ paddingRight: '60px' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}
-                >
-                  {showPass ? 'Hide' : 'Show'}
+          <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+            <Field label="Your ID" htmlFor="id">
+              <input id="id" className="input" value={id} onChange={e => setId(e.target.value)} placeholder="e.g. STU001" autoComplete="username" spellCheck={false} autoCapitalize="none" required />
+            </Field>
+            <Field label="Password" htmlFor="pw">
+              <div className="relative">
+                <input id="pw" className="input pr-12" type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required />
+                <button type="button" onClick={() => setShow(s => !s)} aria-pressed={show} aria-label={show ? 'Hide password' : 'Show password'}
+                  className="absolute right-1 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full text-ink-3 hover:text-ink">
+                  <Icon name={show ? 'eye-off' : 'eye'} size={18} />
                 </button>
               </div>
-            </div>
-
-            {error && (
-              <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span style={{ fontSize: '13px', color: 'var(--red)', fontWeight: 500 }}>{error}</span>
-              </div>
-            )}
-
-            <button
-              type="submit" disabled={loading}
-              className="btn-primary"
-              style={{ background: loading ? 'var(--border2)' : config.color, color: 'white', marginTop: '4px' }}
-            >
-              {loading ? 'Signing in...' : `Sign in as ${config.label}`}
-            </button>
+            </Field>
+            <ErrorNote>{error}</ErrorNote>
+            <Button type="submit" size="lg" full loading={busy} className="mt-1">{busy ? 'Signing in…' : `Sign in as ${LABEL[role].toLowerCase()}`}</Button>
           </form>
 
-          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-            <Link href={`/forgot-credentials?role=${role}`} style={{ fontSize: '14px', color: 'var(--teal)', textDecoration: 'none', fontWeight: 500 }}>
-              Forgot your credentials?
-            </Link>
-            <Link href="/change-password" style={{ fontSize: '13px', color: 'var(--text3)', textDecoration: 'none' }}>
-              Change password
-            </Link>
-          </div>
+          <p className="mt-6 text-center text-sm">
+            <Link href={`/forgot-credentials?role=${role}`} className="font-medium text-brand-text hover:underline">Forgot your password?</Link>
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: 'var(--text3)' }}>Loading...</p></div>}>
-      <LoginForm />
-    </Suspense>
-  )
+  return <Suspense><LoginForm /></Suspense>
 }

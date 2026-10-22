@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
@@ -8,8 +9,15 @@ export function ThemeFab() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'))
-    setMounted(true)
+    const isDark = document.documentElement.classList.contains('dark')
+
+    // Defer the state update until after the effect callback.
+    const frame = requestAnimationFrame(() => {
+      setDark(isDark)
+      setMounted(true)
+    })
+
+    return () => cancelAnimationFrame(frame)
   }, [])
 
   const toggle = useCallback(() => {

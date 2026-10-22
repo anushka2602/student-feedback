@@ -1,181 +1,79 @@
 'use client'
-import { useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { getUser } from '@/lib/auth'
+import { useEffect, useState } from 'react'
+import { Icon, LogoMark } from '@/components/Icon'
+import { RatingInput } from '@/components/RatingInput'
+import { useSession } from '@/components/SessionProvider'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { academicYear } from '@/lib/config'
+import { homeFor, Role } from '@/lib/types'
+
+const ROLES: { role: Role; label: string; desc: string; icon: string }[] = [
+  { role: 'student', label: 'Student', desc: 'Rate your teachers and campus', icon: 'cap' },
+  { role: 'teacher', label: 'Teacher', desc: 'See your ratings and comments', icon: 'layout' },
+  { role: 'admin', label: 'Admin', desc: 'Review all feedback and trends', icon: 'shield' },
+]
 
 export default function Home() {
   const router = useRouter()
+  const { user, status } = useSession()
+  const [demo, setDemo] = useState<number | null>(null)
 
-  useEffect(() => {
-    const user = getUser()
-    if (user) {
-      if (user.role === 'teacher') router.push('/teacher')
-      else if (user.role === 'admin') router.push('/admin')
-      else router.push('/feedback')
-    }
-  }, [router])
+  useEffect(() => { if (user) router.replace(homeFor(user.role)) }, [user, router])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'white', display: 'flex' }}>
-
-      {/* Left — dark panel */}
-      <div style={{
-        width: '45%',
-        background: '#2C687B',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '48px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Pattern overlay */}
-        <div style={{
-          position: 'absolute', inset: 0, opacity: 0.05,
-          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-          backgroundSize: '32px 32px',
-        }} />
-
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '10px',
-            background: '#DB1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <span style={{ color: 'white', fontWeight: 600, fontSize: '15px', letterSpacing: '0.02em' }}>
-            Feedback Portal
-          </span>
+    <main className="min-h-dvh lg:grid lg:grid-cols-[5fr_6fr]">
+      <section className="flex flex-col gap-10 bg-[#2c687b] px-6 pb-10 pt-[max(1.5rem,env(safe-area-inset-top))] text-white lg:justify-between lg:px-14 lg:py-12">
+        <div className="flex items-center gap-2.5">
+          <LogoMark size={36} />
+          <span className="font-display text-lg font-semibold">Student Feedback</span>
+          <span className="ml-auto rounded-full bg-white/15 px-3 py-1 text-[13px] font-medium">{academicYear()}</span>
+          <ThemeToggle className="-mr-2 text-white hover:bg-white/15 lg:hidden" />
         </div>
 
-        {/* Center content */}
-        <div style={{ position: 'relative' }}>
-          <div style={{
-            display: 'inline-block',
-            background: 'rgba(219,26,26,0.2)',
-            color: '#ff9999',
-            fontSize: '11px',
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            padding: '6px 14px',
-            borderRadius: '100px',
-            marginBottom: '24px',
-          }}>
-            Academic Year 2024–25
-          </div>
-          <h1 style={{
-            fontFamily: 'Playfair Display, serif',
-            fontSize: '3rem',
-            fontWeight: 700,
-            color: 'white',
-            lineHeight: 1.15,
-            marginBottom: '20px',
-          }}>
-            Your voice<br />shapes better<br />education.
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '15px', lineHeight: 1.7, maxWidth: '320px' }}>
-            Share honest feedback about teachers, facilities, and campus life. All responses are anonymous and confidential.
+        <div className="max-w-lg">
+          <h1 className="font-display text-[2.5rem] font-bold leading-[1.05] tracking-tight sm:text-5xl">Rate your classes in a few taps.</h1>
+          <p className="mt-4 max-w-md text-[17px] leading-relaxed text-white/85">
+            Pick a number, add a comment if you want to. Teachers see scores and comments, never who wrote them.
           </p>
         </div>
 
-        {/* Bottom stats */}
-        <div style={{ display: 'flex', gap: '32px', position: 'relative' }}>
-          {[
-            { num: '100%', label: 'Anonymous' },
-            { num: '9', label: 'Teachers rated' },
-            { num: '8', label: 'Campus aspects' },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ color: 'white', fontSize: '20px', fontWeight: 700 }}>{s.num}</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px', marginTop: '2px' }}>{s.label}</div>
-            </div>
-          ))}
+        <div className="max-w-lg rounded-card bg-surface p-5 text-ink shadow-xl max-lg:hidden">
+          <p className="mb-1 font-semibold">Try it</p>
+          <p className="mb-4 text-sm text-ink-3">How clear was your last lecture? (This is a demo; nothing is saved.)</p>
+          <RatingInput value={demo} onChange={setDemo} label="Demo rating" compact />
         </div>
-      </div>
+      </section>
 
-      {/* Right — role selection */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '48px',
-        background: '#fafafa',
-      }}>
-        <div style={{ width: '100%', maxWidth: '380px' }}>
-          <h2 style={{ fontSize: '26px', fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>
-            Sign in to continue
-          </h2>
-          <p style={{ color: '#888', fontSize: '14px', marginBottom: '40px' }}>
-            Select your role to access the portal
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              {
-                key: 'student', label: 'Student', desc: 'Submit feedback on teachers & campus',
-                color: '#DB1A1A', lightColor: '#fff5f5',
-                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DB1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-              },
-              {
-                key: 'teacher', label: 'Teacher', desc: 'View your ratings & student comments',
-                color: '#2C687B', lightColor: '#f0f7f8',
-                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2C687B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-              },
-              {
-                key: 'admin', label: 'Admin', desc: 'Access all feedback & analytics',
-                color: '#555', lightColor: '#f5f5f5',
-                icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-              },
-            ].map(role => (
-              <button
-                key={role.key}
-                onClick={() => router.push(`/login?role=${role.key}`)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  padding: '18px 20px', borderRadius: '12px',
-                  background: 'white', border: '1.5px solid #eaeaea',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = role.color
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = `0 4px 20px rgba(0,0,0,0.08)`
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = '#eaeaea'
-                  ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
-                }}
-              >
-                <div style={{
-                  width: '42px', height: '42px', borderRadius: '10px',
-                  background: role.lightColor, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  {role.icon}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#1a1a2e' }}>{role.label}</div>
-                  <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>{role.desc}</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </button>
-            ))}
-          </div>
-
-          <p style={{ textAlign: 'center', color: '#bbb', fontSize: '12px', marginTop: '32px' }}>
-            Use your institution-assigned credentials to sign in
-          </p>
+      <section className="relative flex items-center justify-center px-5 py-10 lg:px-14">
+        <ThemeToggle className="absolute right-4 top-4 max-lg:hidden" />
+        <div className="w-full max-w-sm">
+          {status === 'authed' ? (
+            <p className="text-center text-ink-3" role="status">Taking you to your dashboard…</p>
+          ) : (
+            <>
+              <h2 className="font-display text-2xl font-semibold">Sign in as</h2>
+              <p className="mb-6 mt-1 text-[15px] text-ink-3">Use the ID and password your institution gave you.</p>
+              <ul className="flex flex-col gap-3">
+                {ROLES.map(r => (
+                  <li key={r.role}>
+                    <Link href={`/login?role=${r.role}`}
+                      className="group flex items-center gap-4 rounded-card border border-line bg-surface p-4 transition-[border-color,box-shadow,transform] hover:border-brand-text/50 hover:shadow-card active:scale-[.99]">
+                      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-text"><Icon name={r.icon} size={22} /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">{r.label}</span>
+                        <span className="block text-sm text-ink-3">{r.desc}</span>
+                      </span>
+                      <Icon name="chevron-right" className="text-ink-3 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
-      </div>
-
-    </div>
+      </section>
+    </main>
   )
 }

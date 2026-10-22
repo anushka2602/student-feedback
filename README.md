@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Student Feedback
 
-## Getting Started
+Students rate their teachers, timetable and campus life. Teachers see their own scores and comments. Admins see everything, can filter and search, and can export CSV.
 
-First, run the development server:
+Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · Supabase · Resend
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env.local   # fill in the values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then run `supabase/setup.sql` once in the Supabase SQL editor (locks the tables to server-side access and adds duplicate protection).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Environment variables are described in `.env.example`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How it works
 
-## Learn More
+- **Sign-in** happens on the server (`/api/auth/*`). It sets a signed, httpOnly session cookie. The browser never talks to Supabase directly and never sees a password.
+- **Passwords** are stored as bcrypt hashes. Existing plaintext passwords keep working and are upgraded to bcrypt automatically the first time each person signs in.
+- **Forgot password** emails a new temporary password (the stored one can't be read back). The response is the same whether or not the email exists.
+- **Students** rate teachers (8 factors each) and the timetable, and campus categories, on a 1–10 tap scale. Answers autosave on the device per account, then are sent in one go. The server rejects duplicate submissions.
+- **Teachers** get their average, distribution, per-factor scores and anonymous comments (`/api/teacher/summary`).
+- **Admins** get an overview (per teacher / category averages), filterable and searchable response lists with paging, and CSV export. Queries page past Supabase's 1,000-row default, so totals are accurate.
 
-To learn more about Next.js, take a look at the following resources:
+## Anonymity
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`lib/config.ts` has `ANONYMOUS_MODE`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `false` (default, same as before): the student's name is stored with each submission and visible to admins. Teachers never see names. The UI says exactly that.
+- `true`: submissions are stored as "Anonymous" and admins never see names. The student id is still kept so duplicates can be blocked.
 
-## Deploy on Vercel
+## Project layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/                 pages (student /feedback, /teacher, /admin, auth pages) and /api routes
+components/          UI kit (ui.tsx, Icon), RatingInput, TopBar, dialogs, providers
+lib/                 shared constants, types, drafts, api helpers
+lib/server/          server only: Supabase client, sessions, passwords, rate limiting
+supabase/setup.sql   one-time database hardening
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To change the teacher list, factors or campus categories, edit `lib/constants.ts`.
+
+## Notes
+
+- Rate limiting is in memory per server instance. It slows brute force on serverless hosts but isn't shared across instances.
+- Fonts (Bricolage Grotesque, Figtree) are loaded with `next/font`, so the first production build needs internet access.
